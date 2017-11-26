@@ -1,5 +1,5 @@
 # DS_Project
-1. Add json.jar file from _libs_ folder to build path to handle json.
+1. Add **json.jar** file from **_libs_** folder to **build-path** to handle json.
 
 2. Booking ID format to be {campusName}B{4-digitID}. **Example: KKLB0012**
 
@@ -20,7 +20,7 @@
 
 5. FrontEnd UDP Message to Replica Manager to be of formats  
    - **error:not-available** if server is not available.
-   - **error:{expected_correct_ansewer}** if wrong response.
+   - **error:{expected_correct_answer}** if wrong response.
   
 6. Server response messages:
    
