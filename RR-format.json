@@ -1,0 +1,64 @@
+{
+	"room_records": [
+		{
+			"campus": "KKL",
+			"data": [
+				{
+					"date": "20-12-2017",
+					"rooms": [
+						{
+							"room": "201",
+							"records": [
+								{
+									"time_slot": "1-2",
+									"booked_by": "KKLS1234",
+									"booking_id": "KKLB0001",						
+								}
+							]
+						},
+						{
+							"room": "202",
+							"records": [
+								{
+									"time_slot": "1-2",
+									"booked_by": "KKLS1234",
+									"booking_id": "KKLB0002",						
+								}
+							]
+						}
+					]
+				},
+				{
+					"date": "21-12-2017",
+					"rooms": [
+						{
+							"room": "201",
+							"records": [
+								{
+									"time_slot": "1-2",
+									"booked_by": "KKLS1234",
+									"booking_id": "KKLB0001",						
+								},
+								{
+									"time_slot": "2-3",
+									"booked_by": null,
+									"booking_id": null,						
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"student_booking": [
+		{
+			"student_id": "KKLS1234",
+			"booking_count": "2"
+		},
+		{
+			"student_id": "KKLS2222",
+			"booking_count": "1"
+		}
+	]
+}

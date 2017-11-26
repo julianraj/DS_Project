@@ -43,3 +43,7 @@
    | KKL Server | 7001 |
    | DVL Server | 7002 |
    | WST Server | 7003 |
+   
+8. JSON format for representing database is available in ![RR-format.json](./RR-format.json) file
+
+> P.S. _{ }_ in above formats needs to be excluded in actual implementation.
