@@ -1,0 +1,5 @@
+.idea/*
+logs/
+*.db
+out/
+*.iml
