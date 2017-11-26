@@ -15,10 +15,14 @@ public class Util {
     public static final int DVL_PORT = 7002;
     public static final int WST_PORT = 7003;
 
-    public static int getCampusPort(String campus){
+    public static final String FRONT_END_HOST = "localhost";
+    public static final String SEQUENCER_HOST = "localhost";
+    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"localhost", "localhost", "localhost", "localhost"};
+
+    public static int getCampusPort(String campus) {
         int port;
-        if(campus.equals("KKL")) port = Util.KKL_PORT;
-        else if(campus.equals("DVL")) port = Util.DVL_PORT;
+        if (campus.equals("KKL")) port = Util.KKL_PORT;
+        else if (campus.equals("DVL")) port = Util.DVL_PORT;
         else port = Util.WST_PORT;
 
         return port;

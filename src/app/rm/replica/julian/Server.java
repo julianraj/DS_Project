@@ -3,6 +3,7 @@ package app.rm.replica.julian;
 import app.Util;
 import app.server.ServerOperations;
 
+import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
@@ -10,6 +11,8 @@ public class Server implements ServerOperations {
 
     private HashMap<String, HashMap<Integer, List<RoomRecord>>> mData;
     private HashMap<String, Integer> mStudentData;
+    private HashMap<Integer, String[]> processQueue;
+    private int expectedSequenceNumber;
     private String mCampusName;
     private static long mBookingId = 0;
 
@@ -18,10 +21,12 @@ public class Server implements ServerOperations {
     private boolean notKilled = true;
     private boolean hasError = false;
 
-    public Server(String campusName, HashMap<String, HashMap<Integer, List<RoomRecord>>> mData, HashMap<String, Integer> mStudentData) {
+    public Server(String campusName, HashMap<String, HashMap<Integer, List<RoomRecord>>> mData, HashMap<String, Integer> mStudentData, HashMap<Integer, String[]> processQueue, int expectedSequenceNumber) {
         this.mCampusName = campusName;
         this.mData = mData;
         this.mStudentData = mStudentData;
+        this.processQueue = processQueue;
+        this.expectedSequenceNumber = expectedSequenceNumber;
     }
 
     public void start() throws Exception {
@@ -78,12 +83,10 @@ public class Server implements ServerOperations {
 
                 roomData.put(roomNumber, records);
                 this.mData.put(date, roomData);
-                response = "Time slots created for provided date and room.";
-
-
+                response = "success: Time slots created for provided date and room.";
             }
         } catch (Exception e) {
-            response = e.getMessage();
+            response = "failed: " + e.getMessage();
         }
 
         String logMessage = "Date: " + new Date().toString();
@@ -93,10 +96,10 @@ public class Server implements ServerOperations {
         logMessage += "\n\tRoom number: " + roomNumber;
         logMessage += "\n\tDate: " + date;
         logMessage += "\n\tTime slots: " + timeSlots;
-        logMessage += "\nServerPublisher response: " + response;
+        logMessage += "\nServer response: " + response;
         Util.writeLog(mCampusName + "-server.log", logMessage);
 
-        return response;
+        return response.split(":")[0];
     }
 
     @Override
@@ -106,11 +109,11 @@ public class Server implements ServerOperations {
             synchronized (mData) {
                 HashMap<Integer, List<RoomRecord>> roomData = mData.get(date);
                 if (roomData == null) {
-                    response = "No rooms available for given date.";
+                    response = "failed: No rooms available for given date.";
                 } else {
                     List<RoomRecord> records = roomData.get(roomNumber);
                     if (records == null) {
-                        response = "No room records available for given room number";
+                        response = "failed: No room records available for given room number";
                     } else {
                         for (String timeSlot : timeSlots) {
                             for (Iterator<RoomRecord> iterator = records.iterator(); iterator.hasNext(); ) {
@@ -127,12 +130,12 @@ public class Server implements ServerOperations {
 
                         roomData.put(roomNumber, records);
                         this.mData.put(date, roomData);
-                        response = "Time slots deleted for selected date and room";
+                        response = "success: Time slots deleted for selected date and room";
                     }
                 }
             }
         } catch (Exception e) {
-            response = e.getMessage();
+            response = "failed: " + e.getMessage();
         }
 
         String logMessage = "Date: " + new Date().toString();
@@ -142,19 +145,19 @@ public class Server implements ServerOperations {
         logMessage += "\n\tRoom number: " + roomNumber;
         logMessage += "\n\tDate: " + date;
         logMessage += "\n\tTime slots: " + timeSlots;
-        logMessage += "\nServerPublisher response: " + response;
+        logMessage += "\nServer response: " + response;
         Util.writeLog(mCampusName + "-server.log", logMessage);
 
-        return response;
+        return response.split(":")[0];
     }
 
     @Override
     public String bookRoom(String studentID, String campusName, int roomNumber, String date, String timeSlot) {
-        String bookingID, response = "error";
+        String bookingID, response = "failed: ";
         if (!campusName.equals(mCampusName)) {
             String logMessage = "Date: " + new Date().toString();
             logMessage += "\nRequest Type: Book Room";
-            logMessage += "\nServerPublisher response: redirected request to " + campusName + "server";
+            logMessage += "\nServer response: redirected request to " + campusName + "server";
             Util.writeLog(mCampusName + "-server.log", logMessage);
             return redirectBookRequest(studentID, campusName, roomNumber, date, timeSlot);
         } else {
@@ -172,7 +175,7 @@ public class Server implements ServerOperations {
                                     record.setBookingID(bookingID);
 
                                     mStudentData.put(studentID, count + 1);
-                                    response = "Room booked with bookingID of " + bookingID;
+                                    response = "success: Room booked with bookingID of " + bookingID;
                                 }
                             }
                         }
@@ -190,10 +193,10 @@ public class Server implements ServerOperations {
         logMessage += "\n\tRoom number: " + roomNumber;
         logMessage += "\n\tDater: " + date;
         logMessage += "\n\tTime slot: " + timeSlot;
-        logMessage += "\nServerPublisher response: " + ((response.equals("error")) ? "Could not perform your request." : response);
+        logMessage += "\nServer response: " + ((response.contains("failed")) ? "Could not perform your request." : response);
         Util.writeLog(mCampusName + "-server.log", logMessage);
 
-        return response;
+        return response.split(":")[0];
     }
 
     @Override
@@ -227,7 +230,7 @@ public class Server implements ServerOperations {
         logMessage += "\nRequested by: " + studentID;
         logMessage += "\nParameters:";
         logMessage += "\n\tDate: " + date;
-        logMessage += "\nServerPublisher response: " + returnMessage;
+        logMessage += "\nServer response: " + returnMessage;
         Util.writeLog(mCampusName + "-server.log", logMessage);
 
         return returnMessage;
@@ -236,11 +239,11 @@ public class Server implements ServerOperations {
     @Override
     public String cancelBooking(String studentID, String bookingID) {
         String campusName = bookingID.substring(0, 3);
-        String response = "error";
+        String response = "failed: ";
         if (!campusName.equals(mCampusName)) {
             String logMessage = "Date: " + new Date().toString();
             logMessage += "\nRequest Type: Cancel booking";
-            logMessage += "\nServerPublisher response: redirected request to " + campusName + "server";
+            logMessage += "\nServer response: redirected request to " + campusName + "server";
             Util.writeLog(mCampusName + "-server.log", logMessage);
             return redirectBookCancelRequest(studentID, bookingID);
         } else {
@@ -256,7 +259,7 @@ public class Server implements ServerOperations {
                                     int count = mStudentData.get(studentID);
                                     mStudentData.put(studentID, count - 1);
                                 }
-                                response = "Your booking with bookingID " + bookingID + " has been canceled.";
+                                response = "success: Your booking with bookingID " + bookingID + " has been canceled.";
                             }
                         }
                     }
@@ -270,10 +273,10 @@ public class Server implements ServerOperations {
         logMessage += "\nParameters:";
         logMessage += "\n\tStudentID: " + studentID;
         logMessage += "\n\tBooking ID: " + bookingID;
-        logMessage += "\nServerPublisher response: " + ((response.equals("error")) ? "Could not perform your request." : response);
+        logMessage += "\nServer response: " + ((response.contains("failed")) ? "Could not perform your request." : response);
         Util.writeLog(mCampusName + "-server.log", logMessage);
 
-        return response;
+        return response.split(",")[0];
     }
 
     @Override
@@ -283,7 +286,7 @@ public class Server implements ServerOperations {
         boolean available = isRoomAvailable(campusName, roomNumber, date, timesSlot);
         if (available) {
             cancelResponse = cancelBooking(studentID, bookingID);
-            if (cancelResponse.equals("error")) {
+            if (cancelResponse.equals("failed")) {
                 flag = false;
             } else {
                 bookResponse = bookRoom(studentID, campusName, roomNumber, date, timesSlot);
@@ -291,7 +294,7 @@ public class Server implements ServerOperations {
             }
         }
 
-        return flag ? (cancelResponse + "\nAND\n" + bookResponse) : "Could not perform your request";
+        return flag ? bookResponse : "failed";
     }
 
     private boolean isRoomAvailable(String campusName, int roomNumber, String date, String timeSlot) {
@@ -439,35 +442,75 @@ public class Server implements ServerOperations {
             try {
                 byte[] request = packet.getData();
                 String[] data = new String(request).replace("\0", "").split("-=");
-                if (data[0].equals("ping")) {
-                    if (!mCampusName.equals("KKL")) { //todo
-                        DatagramPacket reply = new DatagramPacket("".getBytes(), 0, packet.getAddress(), packet.getPort());
-                        mSocket.send(reply);
-                    }
-                } else if (data[0].equals("book")) {
-                    String response = bookRoom(data[1], data[2], Integer.valueOf(data[3]), data[4], data[5]);
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), InetAddress.getByName("localhost"), 4567);
-                    mSocket.send(reply);
-                } else if (data[0].equals("cancel")) {
-                    String response = cancelBooking(data[1], data[2]);
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
-                    mSocket.send(reply);
-                } else if (data[0].equals("lookup")) {
-                    String response = getAvailableTimeSlots(data[1], data[2], data[3]);
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
-                    mSocket.send(reply);
-                } else if (data[0].equals("check")) {
-                    String response = String.valueOf(isRoomAvailable(data[1], Integer.valueOf(data[2]), data[3], data[4]));
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
-                    mSocket.send(reply);
+
+                InetAddress host = InetAddress.getByName(Util.FRONT_END_HOST);
+                int port = Util.FRONT_END_PORT;
+                boolean isRedirect = false;
+                if (packet.getPort() != Util.SEQUENCER_PORT) {
+                    isRedirect = true;
+                    port = packet.getPort();
+                    host = packet.getAddress();
+                }
+
+                if (!isRedirect) {
+                    handleRequest(data, host, port);
                 } else {
-                    String response = "Sorry, unknown command.";
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
-                    mSocket.send(reply);
+                    processRequest(data, host, port, false);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void handleRequest(String[] data, InetAddress host, int port) throws IOException {
+        int seq = Integer.valueOf(data[0]);
+        processQueue.put(seq, data);
+        if (expectedSequenceNumber == seq) {
+            processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
+        }
+    }
+
+    private void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
+        if (data[0].equals("ping")) {
+            if (!mCampusName.equals("KKL")) { //todo
+                DatagramPacket reply = new DatagramPacket("".getBytes(), 0, host, port);
+                mSocket.send(reply);
+            }
+        } else if (data[1].equals("create")) {
+            String response = createRoom(data[2], Integer.valueOf(data[3]), data[4], data[5].split(","));
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            mSocket.send(reply);
+        } else if (data[1].equals("delete")) {
+            String response = deleteRoom(data[2], Integer.valueOf(data[3]), data[4], data[5].split(","));
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            mSocket.send(reply);
+        } else if (data[1].equals("book")) {
+            String response = bookRoom(data[2], data[3], Integer.valueOf(data[4]), data[5], data[6]);
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            mSocket.send(reply);
+        } else if (data[1].equals("cancel")) {
+            String response = cancelBooking(data[2], data[3]);
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            mSocket.send(reply);
+        } else if (data[1].equals("availability")) {
+            String response = getAvailableTimeSlots(data[2], data[3], data[4]);
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            mSocket.send(reply);
+        } else if (data[1].equals("check")) {
+            String response = String.valueOf(isRoomAvailable(data[2], Integer.valueOf(data[3]), data[4], data[5]));
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            mSocket.send(reply);
+        } else if (data[1].equals("change")) {
+            String response = changeReservation(data[2], data[3], data[4], Integer.valueOf(data[5]), data[6], data[7]);
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            mSocket.send(reply);
+        }
+
+        if (fromQueue) {
+            expectedSequenceNumber++;
+            if (processQueue.keySet().contains(expectedSequenceNumber))
+                processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
         }
     }
 }

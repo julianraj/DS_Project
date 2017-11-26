@@ -16,6 +16,8 @@ public class ReplicaImplJ extends Replica<Server> {
 
     public static HashMap<String, HashMap<String, HashMap<Integer, List<RoomRecord>>>> mData;
     public static HashMap<String, Integer> mStudentData = new HashMap<>();
+    public static HashMap<Integer, String[]> processQueue = new HashMap<>();
+    private static int expectedSequenceNumber = 1;
 
     private static Timer timer = new Timer(true);
     private static TimerTask calendarTask;
@@ -58,30 +60,9 @@ public class ReplicaImplJ extends Replica<Server> {
     @Override
     public void restart() {
         hasError = false;
+        dataCopied = false;
         stop();
         start(true);
-    }
-
-    @Override
-    protected void requestData() {
-        System.out.println("requesting data...");
-        new Thread(() -> {
-            try {
-                DatagramSocket socket = new DatagramSocket();
-                final InetAddress host = InetAddress.getByName("localhost");
-                DatagramPacket request = new DatagramPacket("getData".getBytes(), 7, host, Util.REPLICA_PORT);
-                socket.send(request);
-
-                byte[] buffer = new byte[4096];
-                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-                socket.receive(reply);
-                String json = new String(buffer).replace("\0", "");
-                mapJsonToData(json);
-
-                System.out.println("Data copied from working replica");
-            } catch (IOException e) {
-            }
-        }).start();
     }
 
     @Override
@@ -132,10 +113,57 @@ public class ReplicaImplJ extends Replica<Server> {
         }
     }
 
-    public void mapDatabaseToJsonn(){
-        JSONObject obj = new JSONObject();
-        obj.put("room", 100);
+    @Override
+    protected String mapDataToJson() {
+        JSONObject myData = new JSONObject();
 
+        JSONArray database = new JSONArray();
+        for (String campus : mData.keySet()) {
+            JSONObject campusData = new JSONObject();
+            campusData.put("campus", campus);
+
+            JSONArray campusDatabase = new JSONArray();
+            for (String date : mData.get(campus).keySet()) {
+                JSONObject dateData = new JSONObject();
+                dateData.put("date", date);
+
+                JSONArray dateDatabase = new JSONArray();
+                for (Integer room : mData.get(campus).get(date).keySet()) {
+                    JSONObject roomData = new JSONObject();
+                    roomData.put("room", room);
+
+                    JSONArray roomDatabase = new JSONArray();
+                    for (RoomRecord record : mData.get(campus).get(date).get(room)) {
+                        JSONObject recordData = new JSONObject();
+                        recordData.put("time_slot", record.mTimeSlot);
+                        recordData.put("booked_by", record.mTimeSlot);
+                        recordData.put("booking_id", record.mTimeSlot);
+                        roomDatabase.put(recordData);
+                    }
+
+                    roomData.put("records", roomDatabase);
+                    dateDatabase.put(roomData);
+                }
+
+                dateData.put("rooms", dateDatabase);
+                campusDatabase.put(dateData);
+            }
+
+            campusData.put("data", campusDatabase);
+            database.put(campusData);
+        }
+        myData.put("room_records", database);
+
+        JSONArray bookingCountData = new JSONArray();
+        for (String student : mStudentData.keySet()) {
+            JSONObject obj = new JSONObject();
+            obj.put("student_id", student);
+            obj.put("booking_count", mStudentData.get(student));
+            bookingCountData.put(obj);
+        }
+        myData.put("student_booking", bookingCountData);
+
+        return myData.toString(4);
     }
 
     @Override
@@ -176,7 +204,7 @@ public class ReplicaImplJ extends Replica<Server> {
     private void startServer(String campus) {
         Thread thread = new Thread(() -> {
             try {
-                Server server = new Server(campus, mData.get(campus), mStudentData);
+                Server server = new Server(campus, mData.get(campus), mStudentData, processQueue, expectedSequenceNumber);
                 server.setHasError(hasError);
                 serverMap.put(campus, server);
                 server.start();
