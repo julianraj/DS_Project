@@ -32,3 +32,14 @@
    | changeReservation | success: _{bookingID}_ | failed |
    | cancelBooking | success | failed |
    | getAvailableTimeSlots | success: _KKL0 DVL0 WST0_ | failed |
+
+7. Ports
+
+   | Component | Port |
+   | --------- | ---- |
+   | FrontEnd | 4001 |
+   | Sequencer | 5001 |
+   | ReplicaManger | 6001 |
+   | KKL Server | 7001 |
+   | DVL Server | 7002 |
+   | WST Server | 7003 |
