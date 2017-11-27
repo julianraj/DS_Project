@@ -32,18 +32,14 @@ public class FrontEndImpl extends ServerPOA {
 
     @Override
     public String bookRoom(String studentID, String campusName, int roomNumber, String date, String timeSlot) {
-        String campus = studentID.substring(0, 3);
-
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket();
-            String message = campus + "-=" + "book-=" + studentID + "-=" + campusName + "-=" + roomNumber + "-=" + date + "-=" + timeSlot;
+            String message = "book-=" + studentID + "-=" + campusName + "-=" + roomNumber + "-=" + date + "-=" + timeSlot;
             System.out.println("message: " + message);
 
             byte[] data = message.getBytes();
-            InetAddress host = InetAddress.getByName("localhost");
-
-            DatagramPacket request = new DatagramPacket(data, data.length, host, Util.getCampusPort(campus));
+            DatagramPacket request = new DatagramPacket(data, data.length, InetAddress.getByName(Util.SEQUENCER_HOST), Util.SEQUENCER_PORT);
             socket.send(request);
 
             byte[] buffer = new byte[2048];

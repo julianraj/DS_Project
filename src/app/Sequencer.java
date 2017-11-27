@@ -1,0 +1,44 @@
+package app;
+
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+
+public class Sequencer {
+
+    private static int sequenceNumber = 1;
+
+    public Sequencer() {
+    }
+
+    public static void main(String[] args) {
+        System.out.println("listening to Front-end...");
+        DatagramSocket socket = null;
+        try {
+            socket = new DatagramSocket(Util.SEQUENCER_PORT);
+            while (true) {
+                byte[] buffer = new byte[2048];
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+                //receive request with sequence number from sequencer
+                socket.receive(packet);
+                String request = new String(packet.getData()).replace("\0", "");
+                String campus = request.split("-=")[1];
+                byte[] forwardMessage = (String.format("%04d", sequenceNumber) + request).getBytes();
+                sequenceNumber += 1;
+                for (String hostName : Util.REPLICA_MANAGER_HOSTS) {
+                    DatagramPacket forward = new DatagramPacket(forwardMessage, forwardMessage.length, InetAddress.getByName(hostName), Util.getCampusPort(campus));
+                    socket.send(forward);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (socket != null)
+                socket.close();
+            socket = null;
+        }
+
+        System.out.println("Sequencer stopped...");
+    }
+}
