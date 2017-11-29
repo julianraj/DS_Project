@@ -12,7 +12,7 @@
 								{
 									"time_slot": "1-2",
 									"booked_by": "KKLS1234",
-									"booking_id": "KKLB0001",						
+									"booking_id": "KKLB0001"
 								}
 							]
 						},
@@ -22,7 +22,7 @@
 								{
 									"time_slot": "1-2",
 									"booked_by": "KKLS1234",
-									"booking_id": "KKLB0002",						
+									"booking_id": "KKLB0002"
 								}
 							]
 						}
@@ -37,12 +37,12 @@
 								{
 									"time_slot": "1-2",
 									"booked_by": "KKLS1234",
-									"booking_id": "KKLB0001",						
+									"booking_id": "KKLB0001"
 								},
 								{
 									"time_slot": "2-3",
 									"booked_by": null,
-									"booking_id": null,						
+									"booking_id": null
 								}
 							]
 						}

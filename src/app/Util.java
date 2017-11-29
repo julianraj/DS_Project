@@ -17,7 +17,7 @@ public class Util {
 
     public static final String FRONT_END_HOST = "localhost";
     public static final String SEQUENCER_HOST = "localhost";
-    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"localhost", "localhost", "localhost", "localhost"};
+    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"localhost"};//, "localhost", "localhost", "localhost"};
 
     public static int getCampusPort(String campus) {
         int port;

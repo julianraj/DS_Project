@@ -3,19 +3,19 @@ package app;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 public class Sequencer {
 
     private static int sequenceNumber = 1;
 
-    public Sequencer() {
-    }
-
     public static void main(String[] args) {
         System.out.println("listening to Front-end...");
         DatagramSocket socket = null;
         try {
-            socket = new DatagramSocket(Util.SEQUENCER_PORT);
+            socket = new DatagramSocket(null);
+            socket.bind(new InetSocketAddress(InetAddress.getByName(Util.SEQUENCER_HOST), Util.SEQUENCER_PORT));
+
             while (true) {
                 byte[] buffer = new byte[2048];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -24,7 +24,8 @@ public class Sequencer {
                 socket.receive(packet);
                 String request = new String(packet.getData()).replace("\0", "");
                 String campus = request.split("-=")[1];
-                byte[] forwardMessage = (String.format("%04d", sequenceNumber) + request).getBytes();
+                byte[] forwardMessage = (String.format("%04d", sequenceNumber) + "-=" + request).getBytes();
+                System.out.println("request: " + new String(forwardMessage));
                 sequenceNumber += 1;
                 for (String hostName : Util.REPLICA_MANAGER_HOSTS) {
                     DatagramPacket forward = new DatagramPacket(forwardMessage, forwardMessage.length, InetAddress.getByName(hostName), Util.getCampusPort(campus));

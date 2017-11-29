@@ -1,13 +1,9 @@
 module app {
     module admin {
         interface Admin {
-            typedef sequence<string> timeSlotSequence;
+            string createRoom(in string adminID, in long roomNumber, in string date, in string timeSlots);
 
-            string createRoom(in string adminID, in long roomNumber, in string date, in timeSlotSequence timeSlots);
-
-            string deleteRoom(in string adminID, in long roomNumber, in string date, in timeSlotSequence timeSlots);
-
-//            string debugData();
+            string deleteRoom(in string adminID, in long roomNumber, in string date, in string timeSlots);
         };
     };
 

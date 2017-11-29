@@ -36,9 +36,9 @@ public class AdminClient {
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
 
-            if(choice == 1 || choice == 2) {
+            if (choice == 1 || choice == 2) {
                 askForInput(scanner, choice);
-            }else{
+            } else {
                 System.out.println("Not a valid choice...");
             }
         } catch (Exception e) {
@@ -55,13 +55,13 @@ public class AdminClient {
 
         System.out.print("Enter time slots as CSV (07:00-09:00,12:00-15:00): ");
         String timeSlots = scanner.next();
-        String[] availableTimeSlots = timeSlots.split(",");
+//        String[] availableTimeSlots = timeSlots.split(",");
 
         String logMessage, response = "--";
 
         switch (choice) {
             case 1:
-                response = adminObject.createRoom(adminID, roomNumber, date, availableTimeSlots);
+                response = adminObject.createRoom(adminID, roomNumber, date, timeSlots);
 
                 logMessage = "Date: " + new Date().toString();
                 logMessage += "\nRequest Type: Create Room";
@@ -73,7 +73,7 @@ public class AdminClient {
                 Util.writeLog(adminID + ".log", logMessage);
                 break;
             case 2:
-                response = adminObject.deleteRoom(adminID, roomNumber, date, availableTimeSlots);
+                response = adminObject.deleteRoom(adminID, roomNumber, date, timeSlots);
 
                 logMessage = "Date: " + new Date().toString();
                 logMessage += "\nRequest Type: Delete Room";

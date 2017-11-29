@@ -3,6 +3,7 @@ package app.rm;
 import app.Util;
 import app.rm.replica.Replica;
 import app.rm.replica.julian.ReplicaImplJ;
+import app.rm.replica.rashmi.ReplicaImplR;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -29,9 +30,13 @@ public class ReplicaManager {
             case 4:
             case 3:
             case 2:
-            case 1:
                 replica = new ReplicaImplJ(hasError);
                 replicaBackup = new ReplicaImplJ(false);
+                replica.start();
+                break;
+            case 1:
+                replica = new ReplicaImplR(hasError);
+                replicaBackup = new ReplicaImplR(false);
                 replica.start();
                 break;
             default:
@@ -57,8 +62,9 @@ public class ReplicaManager {
                         //handle byzantine failure
                         //String correctResponse = request.split(":")[1];
                         errorCount++;
-                        if (errorCount > 2) {
+                        if (errorCount > 0) {
                             errorCount = 0;
+                            System.out.println("restart replica");
                             replica.restart();
                         }
                     }

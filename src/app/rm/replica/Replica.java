@@ -20,36 +20,40 @@ public abstract class Replica<S> {
     public Replica(boolean hasError) {
         this.hasError = hasError;
         serverMap = new HashMap<>();
-
-        startListening();
     }
 
     private void startListening() {
-        try {
-            mSocket = new DatagramSocket(null);
-            mSocket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Util.REPLICA_PORT));
-            while (true) {
+        new Thread() {
+            @Override
+            public void run() {
                 try {
-                    byte[] buffer = new byte[2048];
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    mSocket.receive(packet);
+                    mSocket = new DatagramSocket(null);
+                    mSocket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Util.REPLICA_PORT));
+                    while (true) {
+                        try {
+                            byte[] buffer = new byte[2048];
+                            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                            mSocket.receive(packet);
 
-                    String request = packet.getData().toString().replace("\0", "");
-                    if (request.contains("getData")) {
-                        String response = mapDataToJson();
-                        DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
-                        mSocket.send(reply);
+                            String request = new String(packet.getData()).replace("\0", "");
+                            System.out.println("replica request:" + request);
+                            if (request.contains("getData")) {
+                                String response = mapDataToJson();
+                                DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
+                                mSocket.send(reply);
+                            }
+                        } catch (SocketException e) {
+                        }
                     }
-                } catch (SocketException e) {
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (mSocket != null)
+                        mSocket.close();
+                    mSocket = null;
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (mSocket != null)
-                mSocket.close();
-            mSocket = null;
-        }
+        }.start();
     }
 
     protected void requestData() {
@@ -64,6 +68,7 @@ public abstract class Replica<S> {
 
                     byte[] buffer = new byte[4096];
                     DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+                    socket.setSoTimeout(6000);
                     socket.receive(reply);
                     if (!dataCopied) {
                         dataCopied = true;
@@ -78,6 +83,7 @@ public abstract class Replica<S> {
     }
 
     public void start() {
+        startListening();
         start(false);
     }
 

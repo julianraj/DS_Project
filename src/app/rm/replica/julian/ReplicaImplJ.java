@@ -35,7 +35,7 @@ public class ReplicaImplJ extends Replica<Server> {
             for (String campus : campuses) {
                 if (!requestData) mData.put(campus, new HashMap<>());
 
-                //preFillData(campus);
+                preFillData(campus);
                 startServer(campus);
             }
 
@@ -73,6 +73,8 @@ public class ReplicaImplJ extends Replica<Server> {
                 JSONArray database = jsonData.getJSONArray("room_records");
                 JSONArray studentData = jsonData.getJSONArray("student_booking");
 
+                expectedSequenceNumber = jsonData.getInt("expected_sequence_number");
+
                 mStudentData = new HashMap<>();
                 for (int i = 0; i < studentData.length(); i++) {
                     JSONObject obj = studentData.getJSONObject(i);
@@ -80,13 +82,14 @@ public class ReplicaImplJ extends Replica<Server> {
                 }
 
                 for (int i = 0; i < database.length(); i++) {
-                    JSONObject obj = studentData.getJSONObject(i);
+                    JSONObject obj = database.getJSONObject(i);
                     JSONArray campusData = obj.getJSONArray("data");
                     HashMap<String, HashMap<Integer, List<RoomRecord>>> data = new HashMap<>();
+
                     for (int j = 0; j < campusData.length(); j++) {
-                        JSONObject campusObj = studentData.getJSONObject(i);
+                        JSONObject campusObj = campusData.getJSONObject(j);
                         HashMap<Integer, List<RoomRecord>> roomData = new HashMap<>();
-                        JSONArray rooms = campusData.getJSONArray(j);
+                        JSONArray rooms = campusObj.getJSONArray("rooms");
 
                         for (int k = 0; k < rooms.length(); k++) {
                             JSONObject roomObj = rooms.getJSONObject(k);
@@ -97,8 +100,10 @@ public class ReplicaImplJ extends Replica<Server> {
                                 JSONObject recordObj = recordData.getJSONObject(i);
                                 RoomRecord record = new RoomRecord();
                                 record.setTimeSlot(recordObj.getString("time_slot"));
-                                record.setBookedBy(recordObj.getString("booked_by"));
-                                record.setBookingID(recordObj.getString("booking_id"));
+                                if (recordObj.has("booked_by")) {
+                                    record.setBookedBy(recordObj.getString("booked_by"));
+                                    record.setBookingID(recordObj.getString("booking_id"));
+                                }
                                 records.add(record);
                             }
                             roomData.put(roomObj.getInt("room"), records);
@@ -109,7 +114,7 @@ public class ReplicaImplJ extends Replica<Server> {
                 }
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
@@ -136,8 +141,8 @@ public class ReplicaImplJ extends Replica<Server> {
                     for (RoomRecord record : mData.get(campus).get(date).get(room)) {
                         JSONObject recordData = new JSONObject();
                         recordData.put("time_slot", record.mTimeSlot);
-                        recordData.put("booked_by", record.mTimeSlot);
-                        recordData.put("booking_id", record.mTimeSlot);
+                        recordData.put("booked_by", record.mBookedBy);
+                        recordData.put("booking_id", record.mBookingID);
                         roomDatabase.put(recordData);
                     }
 
@@ -162,6 +167,7 @@ public class ReplicaImplJ extends Replica<Server> {
             bookingCountData.put(obj);
         }
         myData.put("student_booking", bookingCountData);
+        myData.put("expected_sequence_number", expectedSequenceNumber);
 
         return myData.toString(4);
     }

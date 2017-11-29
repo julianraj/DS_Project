@@ -37,7 +37,7 @@ public class FrontEnd {
 
             System.out.println("Frontend is running...");
 
-            new Timer().schedule(
+            /*new Timer().schedule(
                     new java.util.TimerTask() {
                         @Override
                         public void run() {
@@ -52,7 +52,7 @@ public class FrontEnd {
                             } catch (IOException e) {
                             }
                         }
-                    }, 0, 12000);
+                    }, 0, 12000);*/
 
 
             orb.run();
