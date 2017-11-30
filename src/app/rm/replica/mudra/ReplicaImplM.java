@@ -11,8 +11,8 @@ public class ReplicaImplM extends Replica<ServerImpl> {
     private static HashMap<String, HashMap<String, HashMap<String, HashMap<String, Record>>>> mData = new HashMap<>();
     private static int expectedSequenceNumber = 1;
 
-    public ReplicaImplM(boolean hasError) {
-        super(hasError);
+    public ReplicaImplM(int replicaIndex, boolean hasError) {
+        super(replicaIndex, hasError);
 
     }
 

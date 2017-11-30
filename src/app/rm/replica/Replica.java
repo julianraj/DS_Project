@@ -12,12 +12,13 @@ public abstract class Replica<S> {
 
     protected boolean hasError;
     protected boolean dataCopied = false;
-
+    protected final int replicaIndex;
     protected Map<String, S> serverMap;
 
     private DatagramSocket mSocket;
 
-    public Replica(boolean hasError) {
+    public Replica(int replicaIndex, boolean hasError) {
+        this.replicaIndex = replicaIndex;
         this.hasError = hasError;
         serverMap = new HashMap<>();
     }
@@ -28,7 +29,7 @@ public abstract class Replica<S> {
             public void run() {
                 try {
                     mSocket = new DatagramSocket(null);
-                    mSocket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Util.REPLICA_PORT));
+                    mSocket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Util.REPLICA_PORT[replicaIndex]));
                     while (true) {
                         try {
                             byte[] buffer = new byte[2048];
@@ -63,7 +64,7 @@ public abstract class Replica<S> {
                 try {
                     DatagramSocket socket = new DatagramSocket();
                     final InetAddress host = InetAddress.getByName(hostName);
-                    DatagramPacket request = new DatagramPacket("getData".getBytes(), 7, host, Util.REPLICA_PORT);
+                    DatagramPacket request = new DatagramPacket("getData".getBytes(), 7, host, Util.REPLICA_PORT[replicaIndex]);
                     socket.send(request);
 
                     byte[] buffer = new byte[4096];

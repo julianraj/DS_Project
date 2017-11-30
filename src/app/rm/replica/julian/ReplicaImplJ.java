@@ -23,8 +23,8 @@ public class ReplicaImplJ extends Replica<Server> {
     private static Timer timer = new Timer(true);
     private static TimerTask calendarTask;
 
-    public ReplicaImplJ(boolean hasError) {
-        super(hasError);
+    public ReplicaImplJ(int replicaIndex, boolean hasError) {
+        super(replicaIndex, hasError);
     }
 
     @Override
@@ -179,7 +179,7 @@ public class ReplicaImplJ extends Replica<Server> {
         try {
             DatagramSocket socket = new DatagramSocket();
             final InetAddress host = InetAddress.getByName("localhost");
-            DatagramPacket request = new DatagramPacket("ping".getBytes(), 4, host, Util.getCampusPort(campus));
+            DatagramPacket request = new DatagramPacket("ping".getBytes(), 4, host, Util.getCampusPort(campus, replicaIndex));
             socket.send(request);
 
             byte[] buffer = new byte[2048];
@@ -211,7 +211,7 @@ public class ReplicaImplJ extends Replica<Server> {
     private void startServer(String campus) {
         Thread thread = new Thread(() -> {
             try {
-                Server server = new Server(campus, mData.get(campus), mStudentData, processQueue, expectedSequenceNumber);
+                Server server = new Server(campus, mData.get(campus), mStudentData, processQueue, expectedSequenceNumber, replicaIndex);
                 server.setHasError(hasError);
                 serverMap.put(campus, server);
                 server.start();

@@ -22,18 +22,21 @@ public class Server implements ServerOperations {
     private boolean notKilled = true;
     private boolean hasError = false;
 
-    public Server(String campusName, HashMap<String, HashMap<Integer, List<RoomRecord>>> mData, HashMap<String, Integer> mStudentData, HashMap<Integer, String[]> processQueue, AtomicInteger expectedSequenceNumber) {
+    private final int replicaIndex;
+
+    public Server(String campusName, HashMap<String, HashMap<Integer, List<RoomRecord>>> mData, HashMap<String, Integer> mStudentData, HashMap<Integer, String[]> processQueue, AtomicInteger expectedSequenceNumber, int replicaIndex) {
         this.mCampusName = campusName;
         this.mData = mData;
         this.mStudentData = mStudentData;
         this.processQueue = processQueue;
         this.expectedSequenceNumber = expectedSequenceNumber;
+        this.replicaIndex = replicaIndex;
     }
 
     public void start() throws Exception {
         try {
             mSocket = new DatagramSocket(null);
-            mSocket.bind(new InetSocketAddress(InetAddress.getByName("192.168.2.19"), Util.getCampusPort(mCampusName)));
+            mSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]), Util.getCampusPort(mCampusName, replicaIndex)));
             System.out.println("Server for " + mCampusName + " is running...");
             while (notKilled) {
                 try {
@@ -323,8 +326,8 @@ public class Server implements ServerOperations {
             String message = "book-=" + studentId + "-=" + campusName + "-=" + roomNumber + "-=" + date + "-=" + timeSlot;
 
             byte[] data = message.getBytes();
-            InetAddress host = InetAddress.getByName("192.168.2.19");
-            int serverPort = Util.getCampusPort(campusName);
+            InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            int serverPort = Util.getCampusPort(campusName, replicaIndex);
             DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
             socket.send(request);
 
@@ -350,8 +353,8 @@ public class Server implements ServerOperations {
             String message = "cancel-=" + studentID + "-=" + bookingID;
 
             byte[] data = message.getBytes();
-            InetAddress host = InetAddress.getByName("192.168.2.19");
-            int serverPort = Util.getCampusPort(bookingID.substring(0, 3));
+            InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            int serverPort = Util.getCampusPort(bookingID.substring(0, 3), replicaIndex);
             DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
             socket.send(request);
 
@@ -379,8 +382,8 @@ public class Server implements ServerOperations {
                 String message = "lookup-=" + studentID + "-=" + date;
 
                 byte[] data = message.getBytes();
-                InetAddress host = InetAddress.getByName("192.168.2.19");
-                int serverPort = Util.getCampusPort(key);
+                InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+                int serverPort = Util.getCampusPort(key, replicaIndex);
                 DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
                 socket.send(request);
 
@@ -407,8 +410,8 @@ public class Server implements ServerOperations {
             String message = "check-=" + campusName + "-=" + roomNumber + "-=" + date + "-=" + timeSlot;
 
             byte[] data = message.getBytes();
-            InetAddress host = InetAddress.getByName("192.168.2.19");
-            int serverPort = Util.getCampusPort(campusName);
+            InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            int serverPort = Util.getCampusPort(campusName, replicaIndex);
             DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
             socket.send(request);
 

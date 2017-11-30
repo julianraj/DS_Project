@@ -9,21 +9,21 @@ public class Util {
 
     public static final int FRONT_END_PORT = 4001;
     public static final int SEQUENCER_PORT = 5001;
-    public static final int REPLICA_MANAGER_PORT = 6001;
-    public static final int REPLICA_PORT = 7000;
-    public static final int KKL_PORT = 7001;
-    public static final int DVL_PORT = 7002;
-    public static final int WST_PORT = 7003;
+    public static final int[] REPLICA_MANAGER_PORT = new int[]{6001, 6001, 6001, 6001};
+    public static final int[] REPLICA_PORT = new int[]{7000, 7000, 7000, 7000};
+    public static final int[] KKL_PORT = new int[]{7001, 7001, 7001, 7001};
+    public static final int[] DVL_PORT = new int[]{7002, 7002, 7002, 7002};
+    public static final int[] WST_PORT = new int[]{7003, 7003, 7003, 7003};
 
     public static final String FRONT_END_HOST = "192.168.2.19";
     public static final String SEQUENCER_HOST = "192.168.2.19";
-    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"192.168.2.19"};//", "192.168.2.19"};//, "localhost", "localhost", "localhost"};
+    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"192.168.2.19", "192.168.2.19", "192.168.2.19", "192.168.2.19"};
 
-    public static int getCampusPort(String campus) {
+    public static int getCampusPort(String campus, int i) {
         int port;
-        if (campus.equals("KKL")) port = Util.KKL_PORT;
-        else if (campus.equals("DVL")) port = Util.DVL_PORT;
-        else port = Util.WST_PORT;
+        if (campus.equals("KKL")) port = Util.KKL_PORT[i];
+        else if (campus.equals("DVL")) port = Util.DVL_PORT[i];
+        else port = Util.WST_PORT[i];
 
         return port;
     }

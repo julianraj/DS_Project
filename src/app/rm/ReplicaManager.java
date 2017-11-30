@@ -8,6 +8,8 @@ import app.rm.replica.rashmi.ReplicaImplR;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 public class ReplicaManager {
 
@@ -27,20 +29,20 @@ public class ReplicaManager {
         }
 
         switch (replicaNum) {
-            case 4:
             case 3:
-                replica = new ReplicaImplJ(hasError);
-                replicaBackup = new ReplicaImplJ(false);
-                replica.start();
-                break;
             case 2:
-                replica = new ReplicaImplJ(hasError);
-                replicaBackup = new ReplicaImplJ(false);
+                replica = new ReplicaImplJ(replicaNum, hasError);
+                replicaBackup = new ReplicaImplJ(replicaNum, false);
                 replica.start();
                 break;
             case 1:
-                replica = new ReplicaImplR(hasError);
-                replicaBackup = new ReplicaImplR(false);
+                replica = new ReplicaImplJ(replicaNum, hasError);
+                replicaBackup = new ReplicaImplJ(replicaNum, false);
+                replica.start();
+                break;
+            case 0:
+                replica = new ReplicaImplR(replicaNum, hasError);
+                replicaBackup = new ReplicaImplR(replicaNum, false);
                 replica.start();
                 break;
             default:
@@ -51,7 +53,9 @@ public class ReplicaManager {
         System.out.println("listening to Front-end...");
         DatagramSocket socket = null;
         try {
-            socket = new DatagramSocket(Util.REPLICA_MANAGER_PORT);
+            socket = new DatagramSocket(null);
+            socket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaNum]), Util.REPLICA_MANAGER_PORT[replicaNum]));
+
             while (true) {
                 byte[] buffer = new byte[2048];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
