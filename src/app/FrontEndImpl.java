@@ -59,12 +59,12 @@ public class FrontEndImpl extends ServerPOA {
         return processMessage(message);
     }
 
-    private String processMessage(String message) {
+    private String processMessage(String requestMessage) {
         DatagramSocket socket = null;
         try {
-            socket = new DatagramSocket(null);
-            socket.bind(new InetSocketAddress(InetAddress.getByName(Util.FRONT_END_HOST), Util.FRONT_END_PORT));
-
+            socket = new DatagramSocket();
+//            socket.bind(new InetSocketAddress(InetAddress.getByName(Util.FRONT_END_HOST), Util.FRONT_END_PORT));
+            String message = socket.getLocalPort() + "-=" + requestMessage;
             byte[] data = message.getBytes();
             DatagramPacket request = new DatagramPacket(data, data.length, InetAddress.getByName(Util.SEQUENCER_HOST), Util.SEQUENCER_PORT);
             socket.send(request);

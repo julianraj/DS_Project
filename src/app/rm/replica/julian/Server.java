@@ -446,7 +446,10 @@ public class Server implements ServerOperations {
                 InetAddress host = InetAddress.getByName(Util.FRONT_END_HOST);
                 int port = Util.FRONT_END_PORT;
                 boolean isRedirect = false;
-                if (packet.getPort() != Util.SEQUENCER_PORT) {
+                try{
+                    int seq = Integer.valueOf(data[0]);
+                    port = Integer.valueOf(data[1]);
+                }catch(NumberFormatException e){
                     isRedirect = true;
                     port = packet.getPort();
                     host = packet.getAddress();
@@ -465,7 +468,7 @@ public class Server implements ServerOperations {
 
     private void handleRequest(String[] data, InetAddress host, int port) throws IOException {
         int seq = Integer.valueOf(data[0]);
-        processQueue.put(seq, Arrays.copyOfRange(data, 1, data.length));
+        processQueue.put(seq, Arrays.copyOfRange(data, 2, data.length));
         if (expectedSequenceNumber.get() == seq) {
             processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
         }

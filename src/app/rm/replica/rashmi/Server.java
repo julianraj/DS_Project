@@ -539,7 +539,7 @@ public class Server implements CampusOperations {
     }
 
     public void processQueue(String[] request) {
-        processRequest(Arrays.copyOfRange(request, 1, request.length), Util.FRONT_END_HOST, Util.FRONT_END_PORT);
+        processRequest(Arrays.copyOfRange(request, 2, request.length), Util.FRONT_END_HOST, Integer.valueOf(request[1]));
         queue.remove(expected.get());
         expected.incrementAndGet();
         if (queue.containsKey(expected.get()))
