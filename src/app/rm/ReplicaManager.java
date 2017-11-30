@@ -71,7 +71,7 @@ public class ReplicaManager {
                 String request = new String(packet.getData()).replace("\0", "");
                 if (request.startsWith("error")) {
                     if (request.endsWith("not-available")) {
-                        handleNoResponseFailure();
+                        //handleNoResponseFailure();
                     } else {
                         //handle byzantine failure
                         String correctResponse = request.split(":")[1];
