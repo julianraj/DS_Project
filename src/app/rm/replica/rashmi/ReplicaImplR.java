@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReplicaImplR extends Replica<Server> {
     public static HashMap<String, HashMap<Integer, List<RoomRecordClass>>> KKL_data = new HashMap<>();
@@ -13,7 +14,7 @@ public class ReplicaImplR extends Replica<Server> {
 
     public static HashMap<String, Integer> student_booking = new HashMap<>();
     public static HashMap<Integer, String[]> queue;
-    public static int expected = 1;
+    public static AtomicInteger expected = new AtomicInteger(1);
     private static Timer timer = new Timer(true);
 
     public ReplicaImplR(boolean hasError) {
@@ -63,7 +64,7 @@ public class ReplicaImplR extends Replica<Server> {
     protected void mapJsonToData(String json) {
         JSONObject database = new JSONObject(json);
 
-        expected = database.getInt("expected_sequence_number");
+        expected = new AtomicInteger(database.getInt("expected_sequence_number"));
 
         JSONArray room_records_array = database.getJSONArray("room_records");
         JSONArray student_booking_array = database.getJSONArray("student_booking");
@@ -173,7 +174,7 @@ public class ReplicaImplR extends Replica<Server> {
         }
         database.put("room_records", data_array);
         database.put("student_booking", student_booking_array);
-        database.put("expected_sequence_number", expected);
+        database.put("expected_sequence_number", expected.get());
         return database.toString(4);
     }
 

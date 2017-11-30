@@ -11,13 +11,14 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReplicaImplJ extends Replica<Server> {
 
     public static HashMap<String, HashMap<String, HashMap<Integer, List<RoomRecord>>>> mData;
     public static HashMap<String, Integer> mStudentData = new HashMap<>();
     public static HashMap<Integer, String[]> processQueue = new HashMap<>();
-    private static int expectedSequenceNumber = 1;
+    private AtomicInteger expectedSequenceNumber = new AtomicInteger(1);
 
     private static Timer timer = new Timer(true);
     private static TimerTask calendarTask;
@@ -73,7 +74,7 @@ public class ReplicaImplJ extends Replica<Server> {
                 JSONArray database = jsonData.getJSONArray("room_records");
                 JSONArray studentData = jsonData.getJSONArray("student_booking");
 
-                expectedSequenceNumber = jsonData.getInt("expected_sequence_number");
+                expectedSequenceNumber = new AtomicInteger(jsonData.getInt("expected_sequence_number"));
 
                 mStudentData = new HashMap<>();
                 for (int i = 0; i < studentData.length(); i++) {
@@ -167,7 +168,7 @@ public class ReplicaImplJ extends Replica<Server> {
             bookingCountData.put(obj);
         }
         myData.put("student_booking", bookingCountData);
-        myData.put("expected_sequence_number", expectedSequenceNumber);
+        myData.put("expected_sequence_number", expectedSequenceNumber.get());
 
         return myData.toString(4);
     }

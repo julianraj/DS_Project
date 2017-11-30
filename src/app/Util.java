@@ -15,9 +15,9 @@ public class Util {
     public static final int DVL_PORT = 7002;
     public static final int WST_PORT = 7003;
 
-    public static final String FRONT_END_HOST = "localhost";
-    public static final String SEQUENCER_HOST = "localhost";
-    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"localhost"};//, "localhost", "localhost", "localhost"};
+    public static final String FRONT_END_HOST = "192.168.2.19";
+    public static final String SEQUENCER_HOST = "192.168.2.19";
+    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"192.168.2.19"};//", "192.168.2.19"};//, "localhost", "localhost", "localhost"};
 
     public static int getCampusPort(String campus) {
         int port;

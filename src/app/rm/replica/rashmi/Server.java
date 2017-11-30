@@ -8,19 +8,23 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements CampusOperations {
 
     public HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap;
     public HashMap<String, Integer> student_booking;
     public HashMap<Integer, String[]> queue;
-    Integer expected;
+    AtomicInteger expected;
     String campus_name;
     DatagramSocket aSocket = null;
     int booking_id_seq = 1;
 
-    public Server(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap, HashMap<String, Integer> student_booking, String campus, HashMap<Integer, String[]> queue, int expected) {
+    public Server(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap, HashMap<String, Integer> student_booking, String campus, HashMap<Integer, String[]> queue, AtomicInteger expected) {
         this.hashmap = hashmap;
         this.campus_name = campus;
         this.student_booking = student_booking;
@@ -52,7 +56,6 @@ public class Server implements CampusOperations {
             aSocket = null;
         }
     }
-
 
 
     @Override
@@ -187,7 +190,7 @@ public class Server implements CampusOperations {
                             student_booking.put(student_id, booking_number);
 
                             list_of_rr.get(j).booked_by = student_id;
-                            booking_id = campus_name+"B"+String.format("%04d",booking_id_seq);
+                            booking_id = campus_name + "B" + String.format("%04d", booking_id_seq);
                             booking_id_seq++;
                             list_of_rr.get(j).booking_id = booking_id;
                             break;
@@ -223,7 +226,7 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message = ("book-=" + student_id + "-=" + campus_name + "-=" + room_number + "-=" + date + "-=" + slots).getBytes();
-            InetAddress aHost = InetAddress.getByName("localhost");
+            InetAddress aHost = InetAddress.getByName("192.168.2.19");
             int serverPort = Util.getCampusPort(campus_name);
 
             DatagramPacket request = new DatagramPacket(message, message.length, aHost, serverPort);
@@ -249,22 +252,22 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message;
-            InetAddress aHost = InetAddress.getByName("localhost");
+            InetAddress aHost = InetAddress.getByName("192.168.2.19");
             int serverPort = Util.getCampusPort("KKL");
             message = ("timeslot-=" + date + "-=KKL").getBytes();
             reply += requestCampusServer(serverPort, message, aHost, socket);
-            reply += ' ';
+            reply += " ";
 
             serverPort = Util.getCampusPort("DVL");
             message = ("timeslot-=" + date + "-=DVL").getBytes();
             reply += requestCampusServer(serverPort, message, aHost, socket);
-            reply += ' ';
+            reply += " ";
 
             serverPort = Util.getCampusPort("WST");
             message = ("timeslot-=" + date + "-=WST").getBytes();
             reply += requestCampusServer(serverPort, message, aHost, socket);
 
-            return reply;
+            return "success: " + reply;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -312,13 +315,13 @@ public class Server implements CampusOperations {
             String parameters = "Campus Name: " + campus_name + " Date: " + date;
             Helper.writelog("Server", null, campus_name, "Get Time slots", parameters, true, campus_name + available_slots);//todo
 
-            return "success:" + campus_name + available_slots;
+            return campus_name + available_slots;
         }
     }
 
     @Override
     public String cancelBooking(String booking_id, String student_id) {
-        if (this.campus_name.equals(booking_id.split("_")[1].substring(0, 3))) {
+        if (this.campus_name.equals(booking_id.substring(0, 3))) {
             synchronized (hashmap) {
                 for (String date : hashmap.keySet()) {
                     boolean has_record = false;
@@ -383,8 +386,8 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message = ("cancel-=" + student_id + "-=" + booking_id).getBytes();
-            InetAddress aHost = InetAddress.getByName("localhost");
-            int serverPort = Util.getCampusPort(booking_id.split("_")[1].substring(0, 3));
+            InetAddress aHost = InetAddress.getByName("192.168.2.19");
+            int serverPort = Util.getCampusPort(booking_id.substring(0, 3));
 
             DatagramPacket request = new DatagramPacket(message, message.length, aHost, serverPort);
             socket.send(request);
@@ -468,7 +471,7 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message = ("checkAvailability-=" + new_campus_name + "-=" + new_room_no + "-=" + new_date + "-=" + new_time_slot).getBytes();
-            InetAddress aHost = InetAddress.getByName("localhost");
+            InetAddress aHost = InetAddress.getByName("192.168.2.19");
             int serverPort = Util.getCampusPort(new_campus_name);
 
 
@@ -490,7 +493,7 @@ public class Server implements CampusOperations {
     private void UDPConnection() {
         try {
             aSocket = new DatagramSocket(null);
-            aSocket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Util.getCampusPort(campus_name)));
+            aSocket.bind(new InetSocketAddress(InetAddress.getByName("192.168.2.19"), Util.getCampusPort(campus_name)));
             while (true) {
                 byte[] buffer = new byte[1000];
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
@@ -520,14 +523,12 @@ public class Server implements CampusOperations {
         @Override
         public void run() {
             int seq;
-            try{
+            try {
                 seq = Integer.valueOf(data[0]);
                 queue.put(seq, data);
-                if (seq == expected)
+                if (seq == expected.get())
                     processQueue(data);
-            }
-            catch (NumberFormatException e)
-            {
+            } catch (NumberFormatException e) {
                 Server.this.processRequest(data, aPacket.getAddress().getHostName(), aPacket.getPort());
             }
 
@@ -536,11 +537,11 @@ public class Server implements CampusOperations {
     }
 
     public void processQueue(String[] request) {
-        processRequest(Arrays.copyOfRange(request, 1, request.length), Util.FRONT_END_HOST, Util.FRONT_END_PORT );
-        queue.remove(expected);
-        expected++;
-        if (queue.containsKey(expected))
-            processQueue(queue.get(expected));
+        processRequest(Arrays.copyOfRange(request, 1, request.length), Util.FRONT_END_HOST, Util.FRONT_END_PORT);
+        queue.remove(expected.get());
+        expected.incrementAndGet();
+        if (queue.containsKey(expected.get()))
+            processQueue(queue.get(expected.get()));
     }
 
     public void processRequest(String[] data, String host, int port) {
@@ -593,9 +594,9 @@ public class Server implements CampusOperations {
                 String date = data[2];
                 message = getTimeSlotsCampus(date);
             } else {
-                String student_id = data[1];
-                String date = data[2];
-                message = connectUDPServerForTimeSlot(date, campus_name);
+                String campus = data[2];
+                String date = data[1];
+                message = connectUDPServerForTimeSlot(date, campus);
             }
 
             System.out.println(message);

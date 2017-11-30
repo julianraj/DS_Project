@@ -6,22 +6,23 @@ import app.server.ServerOperations;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements ServerOperations {
 
     private HashMap<String, HashMap<Integer, List<RoomRecord>>> mData;
     private HashMap<String, Integer> mStudentData;
     private HashMap<Integer, String[]> processQueue;
-    private int expectedSequenceNumber;
+    private AtomicInteger expectedSequenceNumber;
     private String mCampusName;
-    private static long mBookingId = 0;
+    private long mBookingId = 0;
 
     private DatagramSocket mSocket = null;
 
     private boolean notKilled = true;
     private boolean hasError = false;
 
-    public Server(String campusName, HashMap<String, HashMap<Integer, List<RoomRecord>>> mData, HashMap<String, Integer> mStudentData, HashMap<Integer, String[]> processQueue, int expectedSequenceNumber) {
+    public Server(String campusName, HashMap<String, HashMap<Integer, List<RoomRecord>>> mData, HashMap<String, Integer> mStudentData, HashMap<Integer, String[]> processQueue, AtomicInteger expectedSequenceNumber) {
         this.mCampusName = campusName;
         this.mData = mData;
         this.mStudentData = mStudentData;
@@ -32,7 +33,7 @@ public class Server implements ServerOperations {
     public void start() throws Exception {
         try {
             mSocket = new DatagramSocket(null);
-            mSocket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Util.getCampusPort(mCampusName)));
+            mSocket.bind(new InetSocketAddress(InetAddress.getByName("192.168.2.19"), Util.getCampusPort(mCampusName)));
             System.out.println("Server for " + mCampusName + " is running...");
             while (notKilled) {
                 try {
@@ -40,6 +41,7 @@ public class Server implements ServerOperations {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     mSocket.receive(packet);
 
+                    System.out.println(mCampusName + " le paayo");
                     new ProcessThread(packet).start();
                 } catch (SocketException e) {
                 }
@@ -321,7 +323,7 @@ public class Server implements ServerOperations {
             String message = "book-=" + studentId + "-=" + campusName + "-=" + roomNumber + "-=" + date + "-=" + timeSlot;
 
             byte[] data = message.getBytes();
-            InetAddress host = InetAddress.getByName("localhost");
+            InetAddress host = InetAddress.getByName("192.168.2.19");
             int serverPort = Util.getCampusPort(campusName);
             DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
             socket.send(request);
@@ -348,7 +350,7 @@ public class Server implements ServerOperations {
             String message = "cancel-=" + studentID + "-=" + bookingID;
 
             byte[] data = message.getBytes();
-            InetAddress host = InetAddress.getByName("localhost");
+            InetAddress host = InetAddress.getByName("192.168.2.19");
             int serverPort = Util.getCampusPort(bookingID.substring(0, 3));
             DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
             socket.send(request);
@@ -377,7 +379,7 @@ public class Server implements ServerOperations {
                 String message = "lookup-=" + studentID + "-=" + date;
 
                 byte[] data = message.getBytes();
-                InetAddress host = InetAddress.getByName("localhost");
+                InetAddress host = InetAddress.getByName("192.168.2.19");
                 int serverPort = Util.getCampusPort(key);
                 DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
                 socket.send(request);
@@ -405,7 +407,7 @@ public class Server implements ServerOperations {
             String message = "check-=" + campusName + "-=" + roomNumber + "-=" + date + "-=" + timeSlot;
 
             byte[] data = message.getBytes();
-            InetAddress host = InetAddress.getByName("localhost");
+            InetAddress host = InetAddress.getByName("192.168.2.19");
             int serverPort = Util.getCampusPort(campusName);
             DatagramPacket request = new DatagramPacket(data, data.length, host, serverPort);
             socket.send(request);
@@ -461,9 +463,10 @@ public class Server implements ServerOperations {
     private void handleRequest(String[] data, InetAddress host, int port) throws IOException {
         int seq = Integer.valueOf(data[0]);
         processQueue.put(seq, Arrays.copyOfRange(data, 1, data.length));
-        if (expectedSequenceNumber == seq) {
-            processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
+        if (expectedSequenceNumber.get() == seq) {
+            processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
         }
+
     }
 
     private void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
@@ -506,12 +509,13 @@ public class Server implements ServerOperations {
             mSocket.send(reply);
         }
 
-        processQueue.remove(expectedSequenceNumber);
-
         if (fromQueue) {
-            expectedSequenceNumber++;
-            if (processQueue.keySet().contains(expectedSequenceNumber))
-                processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
+            synchronized (expectedSequenceNumber) {
+                processQueue.remove(expectedSequenceNumber);
+                expectedSequenceNumber.incrementAndGet();
+                if (processQueue.keySet().contains(expectedSequenceNumber))
+                    processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
+            }
         }
     }
 }
