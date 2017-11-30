@@ -1,31 +1,30 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package app.rm.replica.mudra;
 
-public class Record {
+import java.io.Serializable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    String bookingId;
-    String bookedBy;
-
-    public Record(String bookingId, String bookedBy) {
-        this.bookingId = bookingId;
-        this.bookedBy = bookedBy;
-    }
+@SuppressWarnings("serial")
+public class Record implements Serializable {
+    public String id;
+    public String bookedBy;
 
     public Record() {
     }
 
-    public String getBookingId() {
-        return bookingId;
-    }
-
-    public String getBookedBy() {
-        return bookedBy;
-    }
-
-    public void setBookingId(String bookingId) {
-        this.bookingId = bookingId;
-    }
-
-    public void setBookedBy(String bookedBy) {
+    public Record(String id, String bookedBy) {
+        this.id = id;
         this.bookedBy = bookedBy;
+    }
+
+    public boolean patternMatcher(String s, String compile) {
+        Pattern p = Pattern.compile(compile);
+        Matcher m = p.matcher(s);
+        return m.matches();
     }
 }

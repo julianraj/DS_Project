@@ -1,32 +1,38 @@
 package app.rm.replica.mudra;
 
 import app.rm.replica.Replica;
-import app.rm.replica.julian.RoomRecord;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-public class ReplicaImplM extends Replica<String> {
+public class ReplicaImplM extends Replica<ServerImpl> {
 
-    private static  HashMap<String, HashMap<String,HashMap<String,HashMap<String,Record>>>> mData = new HashMap<>();
+    private static HashMap<String, HashMap<String, HashMap<String, HashMap<String, Record>>>> mData = new HashMap<>();
+    private static int expectedSequenceNumber = 1;
 
     public ReplicaImplM(boolean hasError) {
         super(hasError);
+
     }
 
     @Override
     protected void start(boolean requestData) {
-        if(mData == null) mData = new HashMap<>();
-        if(requestData) requestData();
+        if (mData == null) mData = new HashMap<>();
+        if (requestData) requestData();
 
-        try{
+        try {
             for (String campus : campuses) {
-                if(!requestData) mData.put(campus, new HashMap<>());
+                if (!requestData) mData.put(campus, new HashMap<>());
+
+                ServerImpl.ServerDetails details;
+                if (campus.equals("KKL")) details = ServerImpl.ServerDetails.KKL;
+                else if (campus.equals("DVL")) details = ServerImpl.ServerDetails.DVL;
+                else details = ServerImpl.ServerDetails.WST;
+                ServerImpl server = new ServerImpl(details);
+                server.start();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -68,10 +74,10 @@ public class ReplicaImplM extends Replica<String> {
                                 JSONObject recordObj = recordData.getJSONObject(i);
 
                                 Record record = null;
-                                if(recordObj.has("booked_by")) {
+                                if (recordObj.has("booked_by")) {
                                     record = new Record();
-                                    record.setBookedBy(recordObj.getString("booked_by"));
-                                    record.setBookingId(recordObj.getString("booking_id"));
+                                    record.bookedBy = recordObj.getString("booked_by");
+                                    record.id = recordObj.getString("booking_id");
                                 }
                                 records.put(recordObj.getString("time_slot"), record);
                             }
@@ -111,8 +117,8 @@ public class ReplicaImplM extends Replica<String> {
                     for (String timeslot : mData.get(campus).get(date).get(room).keySet()) {
                         JSONObject recordData = new JSONObject();
                         recordData.put("time_slot", timeslot);
-                        recordData.put("booked_by", mData.get(campus).get(date).get(room).get(timeslot).getBookedBy());
-                        recordData.put("booking_id", mData.get(campus).get(date).get(room).get(timeslot).getBookingId());
+                        recordData.put("booked_by", mData.get(campus).get(date).get(room).get(timeslot).bookedBy);
+                        recordData.put("booking_id", mData.get(campus).get(date).get(room).get(timeslot).id);
                         roomDatabase.put(recordData);
                     }
 
@@ -137,6 +143,7 @@ public class ReplicaImplM extends Replica<String> {
             bookingCountData.put(obj);
         }*/
         myData.put("student_booking", bookingCountData);
+        myData.put("expected_sequence_number", expectedSequenceNumber);
 
         return myData.toString(4);
     }

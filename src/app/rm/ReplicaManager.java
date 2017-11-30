@@ -28,7 +28,12 @@ public class ReplicaManager {
 
         switch (replicaNum) {
             case 4:
+
             case 3:
+                replica = new ReplicaImplJ(hasError);
+                replicaBackup = new ReplicaImplJ(false);
+                replica.start();
+                break;
             case 2:
                 replica = new ReplicaImplJ(hasError);
                 replicaBackup = new ReplicaImplJ(false);
