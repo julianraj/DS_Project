@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class FrontEndImpl extends ServerPOA {
@@ -75,13 +76,9 @@ public class FrontEndImpl extends ServerPOA {
             new HandlerThread(socket).start();
             while (result == null) {
             }
-            String myResult = result;
-            result = null;
-            return myResult;
+            return result;
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
-        } finally {
-            if (socket != null && !socket.isClosed()) socket.close();
         }
         return "failed";
     }
@@ -97,6 +94,7 @@ public class FrontEndImpl extends ServerPOA {
         @Override
         public void run() {
             List<String> resultList = new ArrayList<>();
+            List<String> errorCheckList = new ArrayList<>();
             try {
                 //==== remove this ======
 //                byte[] buffer = new byte[2048];
@@ -112,51 +110,53 @@ public class FrontEndImpl extends ServerPOA {
 //                errorSocket.close();
                 //=======================
 
-                boolean error = false;
                 for (int i = 0; i < 4; i++) {
                     byte[] buffer = new byte[2048];
                     DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                     fSocket.receive(reply);
                     String response = new String(reply.getData()).replace("\0", "");
-
-                    if (!resultList.contains(response)) {
-                        /*if (result != null && !response.equals(result)) {
+                    String actualResponse = response.split("-=")[1];
+                    if (!resultList.contains(actualResponse)) {
+                        /*if (result != null && !actualResponse.equals(result)) {
                             error = true;
                         }*/
                     } else {
                         if (result == null) {
-                            result = response;
+                            result = actualResponse;
                             fSocket.setSoTimeout(2000);
                         } else {
-                            /*if (!response.equals(result)) {
+                            /*if (!actualResponse.equals(result)) {
                                 error = true;
                             }*/
                         }
                     }
-
-                    resultList.add(response);
+                    resultList.add(actualResponse);
+                    errorCheckList.add(response);
                 }
-                checkErrors(resultList);
+                checkErrors(errorCheckList);
             } catch (SocketTimeoutException e) {
-                checkErrors(resultList);
+                checkErrors(errorCheckList);
                 //server down
                 sendMessageToRMs("error:not-available");
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            fSocket.close();
         }
 
         private void checkErrors(List<String> results) {
+            System.out.println("results: " + Arrays.deepToString(results.toArray()));
             List<String> errorIndexes = new ArrayList<>();
             for (String str : results) {
                 String rm = str.split("-=")[0];
-                if (!str.equals(result)) errorIndexes.add(rm);
+                if (!str.split("-=")[1].equals(result)) {
+                    System.out.println("error: " + rm);
+                    errorIndexes.add(rm);
+                }
             }
-
-            String errorMessage = "error:" + String.join(",", errorIndexes);
-            sendMessageToRMs(errorMessage);
+            if (!errorIndexes.isEmpty()) {
+                String errorMessage = "error:" + String.join(",", errorIndexes);
+                sendMessageToRMs(errorMessage);
+            }
         }
 
         private void sendMessageToRMs(String message) {

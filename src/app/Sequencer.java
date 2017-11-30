@@ -23,11 +23,11 @@ public class Sequencer {
                 //receive request with sequence number from sequencer
                 socket.receive(packet);
                 String request = new String(packet.getData()).replace("\0", "");
-                String campus = request.split("-=")[1].substring(0, 3);
+                String campus = request.split("-=")[2].substring(0, 3);
                 byte[] forwardMessage = (String.format("%04d", sequenceNumber) + "-=" + request).getBytes();
                 System.out.println("request: " + new String(forwardMessage));
                 sequenceNumber += 1;
-                for (int i = 0; i < Util.REPLICA_MANAGER_HOSTS.length; i+=5) {
+                for (int i = 0; i < Util.REPLICA_MANAGER_HOSTS.length; i++) {
                     DatagramPacket forward = new DatagramPacket(forwardMessage, forwardMessage.length,
                             InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[i]), Util.getCampusPort(campus, i));
                     socket.send(forward);
