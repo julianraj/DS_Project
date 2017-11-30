@@ -10,6 +10,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
 
 public class ReplicaManager {
 
@@ -30,14 +32,18 @@ public class ReplicaManager {
 
         switch (replicaNum) {
             case 3:
+                replica = new ReplicaImplR(replicaNum, hasError);
+                replicaBackup = new ReplicaImplR(replicaNum, false);
+                replica.start();
+                break;
             case 2:
                 replica = new ReplicaImplJ(replicaNum, hasError);
                 replicaBackup = new ReplicaImplJ(replicaNum, false);
                 replica.start();
                 break;
             case 1:
-                replica = new ReplicaImplJ(replicaNum, hasError);
-                replicaBackup = new ReplicaImplJ(replicaNum, false);
+                replica = new ReplicaImplR(replicaNum, hasError);
+                replicaBackup = new ReplicaImplR(replicaNum, false);
                 replica.start();
                 break;
             case 0:
@@ -68,12 +74,15 @@ public class ReplicaManager {
                         handleNoResponseFailure();
                     } else {
                         //handle byzantine failure
-                        //String correctResponse = request.split(":")[1];
-                        errorCount++;
-                        if (errorCount > 0) {
-                            errorCount = 0;
-                            System.out.println("restart replica");
-                            replica.restart();
+                        String correctResponse = request.split(":")[1];
+                        List<String> data = Arrays.asList(correctResponse.split(","));
+                        if (data.contains(String.valueOf(replicaNum))) {
+                            errorCount++;
+                            if (errorCount > 0) {
+                                errorCount = 0;
+                                System.out.println("restart replica");
+                                replica.restart();
+                            }
                         }
                     }
                 }

@@ -4,7 +4,10 @@ import app.server.ServerPOA;
 import org.omg.CORBA.ORB;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,48 +96,80 @@ public class FrontEndImpl extends ServerPOA {
 
         @Override
         public void run() {
-            List<String> results = new ArrayList<>();
+            List<String> resultList = new ArrayList<>();
             try {
                 //==== remove this ======
-                byte[] buffer = new byte[2048];
-                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-                fSocket.receive(reply);
-                String response = new String(reply.getData()).replace("\0", "");
-                result = response;
-                System.out.println(result);
+//                byte[] buffer = new byte[2048];
+//                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+//                fSocket.receive(reply);
+//                String response = new String(reply.getData()).replace("\0", "");
+//                result = response;
+//                System.out.println(result);
 
 //                DatagramSocket errorSocket = new DatagramSocket();
 //                byte[] errMessage = ("error").getBytes();
 //                errorSocket.send(new DatagramPacket(errMessage, errMessage.length, reply.getAddress(), Util.REPLICA_MANAGER_PORT));
 //                errorSocket.close();
                 //=======================
-                /*for (int i = 0; i < 4; i++) {
+
+                boolean error = false;
+                for (int i = 0; i < 4; i++) {
                     byte[] buffer = new byte[2048];
                     DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                     fSocket.receive(reply);
                     String response = new String(reply.getData()).replace("\0", "");
-                    if (!results.contains(response)) {
-                        if (results.size() > 0) {
-                            //hasError = true;
-                            DatagramSocket errorSocket = new DatagramSocket();
-                            byte[] errMessage = ("error:" + result).getBytes();
-                            errorSocket.send(new DatagramPacket(errMessage, errMessage.length, reply.getAddress(), Util.REPLICA_MANAGER_PORT));
-                            errorSocket.close();
-                        }
-                        results.add(response);
-                    } else {
-                        result = response;
-                        fSocket.setSoTimeout(1000);
-                    }
-                }*/
-            } catch (SocketTimeoutException e) {
-                //server down
 
+                    if (!resultList.contains(response)) {
+                        /*if (result != null && !response.equals(result)) {
+                            error = true;
+                        }*/
+                    } else {
+                        if (result == null) {
+                            result = response;
+                            fSocket.setSoTimeout(2000);
+                        } else {
+                            /*if (!response.equals(result)) {
+                                error = true;
+                            }*/
+                        }
+                    }
+
+                    resultList.add(response);
+                }
+                checkErrors(resultList);
+            } catch (SocketTimeoutException e) {
+                checkErrors(resultList);
+                //server down
+                sendMessageToRMs("error:not-available");
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
             fSocket.close();
+        }
+
+        private void checkErrors(List<String> results) {
+            List<String> errorIndexes = new ArrayList<>();
+            for (String str : results) {
+                String rm = str.split("-=")[0];
+                if (!str.equals(result)) errorIndexes.add(rm);
+            }
+
+            String errorMessage = "error:" + String.join(",", errorIndexes);
+            sendMessageToRMs(errorMessage);
+        }
+
+        private void sendMessageToRMs(String message) {
+            try {
+                for (int i = 0; i < Util.REPLICA_MANAGER_HOSTS.length; i++) {
+                    DatagramSocket errorSocket = new DatagramSocket();
+                    byte[] errMessage = message.getBytes();
+                    errorSocket.send(new DatagramPacket(errMessage, errMessage.length, InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[i]), Util.REPLICA_MANAGER_PORT[i]));
+                    errorSocket.close();
+                }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
         }
     }
 }
