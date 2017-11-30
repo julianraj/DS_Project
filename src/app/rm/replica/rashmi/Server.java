@@ -531,7 +531,7 @@ public class Server implements CampusOperations {
                 if (seq == expected.get())
                     processQueue(data);
             } catch (NumberFormatException e) {
-                Server.this.processRequest(data, aPacket.getAddress().getHostName(), aPacket.getPort());
+                Server.this.processRequest(data, aPacket.getAddress().getHostName(), aPacket.getPort(), true);
             }
 
 
@@ -539,14 +539,14 @@ public class Server implements CampusOperations {
     }
 
     public void processQueue(String[] request) {
-        processRequest(Arrays.copyOfRange(request, 2, request.length), Util.FRONT_END_HOST, Integer.valueOf(request[1]));
+        processRequest(Arrays.copyOfRange(request, 2, request.length), Util.FRONT_END_HOST, Integer.valueOf(request[1]),false);
         queue.remove(expected.get());
         expected.incrementAndGet();
         if (queue.containsKey(expected.get()))
             processQueue(queue.get(expected.get()));
     }
 
-    public void processRequest(String[] data, String host, int port) {
+    public void processRequest(String[] data, String host, int port, boolean local) {
         System.out.println(Arrays.deepToString(data));
         try {
             String message = "";
@@ -601,8 +601,13 @@ public class Server implements CampusOperations {
                 message = connectUDPServerForTimeSlot(date, campus);
             }
 
+            if(!local)
+            {
+                message = replicaIndex+ "-=" + message;
+            }
             System.out.println(message);
             DatagramPacket reply = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(host), port);
+
             aSocket.send(reply);
         } catch (IOException e) {
 
