@@ -116,6 +116,7 @@ public class FrontEndImpl extends ServerPOA {
                     fSocket.receive(reply);
                     String response = new String(reply.getData()).replace("\0", "");
                     String actualResponse = response.split("-=")[1];
+                    System.out.println("res: " + response + "/" + actualResponse);
                     if (!resultList.contains(actualResponse)) {
                         /*if (result != null && !actualResponse.equals(result)) {
                             error = true;
@@ -141,6 +142,8 @@ public class FrontEndImpl extends ServerPOA {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            result = null;
         }
 
         private void checkErrors(List<String> results) {

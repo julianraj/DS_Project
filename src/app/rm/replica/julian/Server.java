@@ -181,7 +181,7 @@ public class Server implements ServerOperations {
                                     record.setBookingID(bookingID);
 
                                     mStudentData.put(studentID, count + 1);
-                                    response = "success: " + bookingID;
+                                    response = "success:" + bookingID;
                                 }
                             }
                         }
@@ -211,7 +211,7 @@ public class Server implements ServerOperations {
     }
 
     private String getAvailableTimeSlots(String studentID, String date, boolean flag) {
-        if (hasError) return mCampusName + "0";
+//        if (hasError) return mCampusName + "0";
 
         String returnMessage;
         int count = 0;
