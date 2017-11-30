@@ -101,11 +101,12 @@ public class FrontEndImpl extends ServerPOA {
                 fSocket.receive(reply);
                 String response = new String(reply.getData()).replace("\0", "");
                 result = response;
+                System.out.println(result);
 
-                DatagramSocket errorSocket = new DatagramSocket();
-                byte[] errMessage = ("error").getBytes();
-                errorSocket.send(new DatagramPacket(errMessage, errMessage.length, reply.getAddress(), Util.REPLICA_MANAGER_PORT));
-                errorSocket.close();
+//                DatagramSocket errorSocket = new DatagramSocket();
+//                byte[] errMessage = ("error").getBytes();
+//                errorSocket.send(new DatagramPacket(errMessage, errMessage.length, reply.getAddress(), Util.REPLICA_MANAGER_PORT));
+//                errorSocket.close();
                 //=======================
                 /*for (int i = 0; i < 4; i++) {
                     byte[] buffer = new byte[2048];

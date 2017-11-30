@@ -1,7 +1,7 @@
 package app.rm.replica.rashmi;
 
+import app.Helper;
 import app.Util;
-import app.server.ServerOperations;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,18 +12,20 @@ import java.util.*;
 
 public class Server implements CampusOperations {
 
-    HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap;
-    HashMap<String, Integer> student_booking;
-    HashMap<Integer, String[]> queue;
+    public HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap;
+    public HashMap<String, Integer> student_booking;
+    public HashMap<Integer, String[]> queue;
     Integer expected;
     String campus_name;
     DatagramSocket aSocket = null;
+    int booking_id_seq = 1;
 
-
-    public Server(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> kkl_data, HashMap<String, Integer> student_booking, String campus, HashMap<Integer, String[]> queue, int expected) {
+    public Server(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap, HashMap<String, Integer> student_booking, String campus, HashMap<Integer, String[]> queue, int expected) {
         this.hashmap = hashmap;
-        this.campus_name = campus_name;
+        this.campus_name = campus;
         this.student_booking = student_booking;
+        this.queue = queue;
+        this.expected = expected;
 
 
         List<RoomRecordClass> list_time_slots = new ArrayList<>();
@@ -51,12 +53,7 @@ public class Server implements CampusOperations {
         }
     }
 
-    public void queue_function(String[] request) {
-        processQueue(request);
-        expected++;
-        if (queue.containsKey(expected))
-            queue_function(queue.get(expected));
-    }
+
 
     @Override
     public String createRoom(String admin_id, int room_number, String date, String[] slots) {
@@ -87,7 +84,7 @@ public class Server implements CampusOperations {
             hashmap.put(date, rr);
         }
         String parameters = "Room Number: " + room_number + " Date: " + date + " Slots: " + Arrays.deepToString(slots);
-        //Helper.writelog("Server", null, campus_name, "Create Room", parameters, true, "Room Created");//todo
+        Helper.writelog("Server", null, campus_name, "Create Room", parameters, true, "Room Created");//todo
         return ("success");
     }
 
@@ -98,7 +95,7 @@ public class Server implements CampusOperations {
             if (rr == null || rr.isEmpty()) {
                 String message = "There are no rooms in the given date to delete";
                 String parameters = "Room Number: " + room_number + " Date: " + date + " Slots: " + Arrays.deepToString(slots);
-                //Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
+                Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
                 System.out.println(message);
                 return "failed";
             }
@@ -108,7 +105,7 @@ public class Server implements CampusOperations {
             if (list_of_rr == null || list_of_rr.isEmpty()) {
                 String message = "There are no rooms in the given date and room number to delete";
                 String parameters = "Room Number: " + room_number + " Date: " + date + " Slots: " + Arrays.deepToString(slots);
-                //Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
+                Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
                 System.out.println(message);
                 return "failed";
             }
@@ -133,12 +130,12 @@ public class Server implements CampusOperations {
             if (has_record) {
                 String parameters = "Room Number: " + room_number + " Date: " + date + " Slots: " + Arrays.deepToString(slots);
                 String message = "Time slot deleted";
-                //Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
+                Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
                 return "success";
             } else {
                 String parameters = "Room Number: " + room_number + " Date: " + date + " Slots: " + Arrays.deepToString(slots);
                 String message = "Time slot not found";
-                //Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
+                Helper.writelog("Server", null, campus_name, "Delete Room", parameters, true, message);//todo
                 return "failed";
             }
         }
@@ -153,7 +150,7 @@ public class Server implements CampusOperations {
                 if (rr == null) {
                     message = "There are no rooms in the given date to book";
                     String parameters = "Student Id: " + student_id + "Campus Name: " + campus_name + " Room Number: " + room_number + " Date: " + date + " Slots: " + slots;
-                    //Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
+                    Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
 
                     return "failed";
                 }
@@ -162,7 +159,7 @@ public class Server implements CampusOperations {
                 if (list_of_rr == null) {
                     message = "There are no rooms in the given date and room number to book";
                     String parameters = "Student Id: " + student_id + "Campus Name: " + campus_name + " Room Number: " + room_number + " Date: " + date + " Slots: " + slots;
-                    //Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
+                    Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
 
                     return "failed";
                 }
@@ -178,7 +175,7 @@ public class Server implements CampusOperations {
                 if (booking_number >= 3) {
                     message = "You have exceeded your quota";
                     String parameters = "Student Id: " + student_id + "Campus Name: " + campus_name + " Room Number: " + room_number + " Date: " + date + " Slots: " + slots;
-                    //Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
+                    Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
 
                     return "failed";
                 }
@@ -188,14 +185,16 @@ public class Server implements CampusOperations {
                         if (list_of_rr.get(j).booking_id == null) {
                             booking_number += 1;
                             student_booking.put(student_id, booking_number);
+
                             list_of_rr.get(j).booked_by = student_id;
-                            booking_id = student_id + "_" + campus_name + new Random().nextInt(1000);
+                            booking_id = campus_name+"B"+String.format("%04d",booking_id_seq);
+                            booking_id_seq++;
                             list_of_rr.get(j).booking_id = booking_id;
                             break;
                         } else {
                             message = "This room has already been booked";
                             String parameters = "Student Id: " + student_id + "Campus Name: " + campus_name + " Room Number: " + room_number + " Date: " + date + " Slots: " + slots;
-                            //Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
+                            Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
                             return "failed";
                         }
                     }
@@ -204,12 +203,12 @@ public class Server implements CampusOperations {
                 if (!has_record) {
                     message = "Time slot Not found";
                     String parameters = "Student Id: " + student_id + "Campus Name: " + campus_name + " Room Number: " + room_number + " Date: " + date + " Slots: " + slots;
-                    //Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
+                    Helper.writelog("Server", null, campus_name, "Book Room", parameters, false, message);//todo
                     return "failed";
                 }
                 message = "Your booking id is " + booking_id;
                 String parameters = "Student Id: " + student_id + "Campus Name: " + campus_name + " Room Number: " + room_number + " Date: " + date + " Slots: " + slots;
-                //Helper.writelog("Server", null, campus_name, "Book Room", parameters, true, message);//todo
+                Helper.writelog("Server", null, campus_name, "Book Room", parameters, true, message);//todo
 
                 return "success:" + booking_id;
             }
@@ -223,7 +222,7 @@ public class Server implements CampusOperations {
         try {
             socket = new DatagramSocket();
 
-            byte[] message = ("book>>" + student_id + ">>" + campus_name + ">>" + room_number + ">>" + date + ">>" + slots).getBytes();
+            byte[] message = ("book-=" + student_id + "-=" + campus_name + "-=" + room_number + "-=" + date + "-=" + slots).getBytes();
             InetAddress aHost = InetAddress.getByName("localhost");
             int serverPort = Util.getCampusPort(campus_name);
 
@@ -252,19 +251,18 @@ public class Server implements CampusOperations {
             byte[] message;
             InetAddress aHost = InetAddress.getByName("localhost");
             int serverPort = Util.getCampusPort("KKL");
-            message = ("timeslot>>" + date + ">>KKL").getBytes();
+            message = ("timeslot-=" + date + "-=KKL").getBytes();
             reply += requestCampusServer(serverPort, message, aHost, socket);
-            reply += '\n';
+            reply += ' ';
 
             serverPort = Util.getCampusPort("DVL");
-            message = ("timeslot>>" + date + ">>DVL").getBytes();
+            message = ("timeslot-=" + date + "-=DVL").getBytes();
             reply += requestCampusServer(serverPort, message, aHost, socket);
-            reply += '\n';
+            reply += ' ';
 
             serverPort = Util.getCampusPort("WST");
-            message = ("timeslot>>" + date + ">>WST").getBytes();
+            message = ("timeslot-=" + date + "-=WST").getBytes();
             reply += requestCampusServer(serverPort, message, aHost, socket);
-            reply += '\n';
 
             return reply;
 
@@ -312,7 +310,7 @@ public class Server implements CampusOperations {
             }
 
             String parameters = "Campus Name: " + campus_name + " Date: " + date;
-            //Helper.writelog("Server", null, campus_name, "Get Time slots", parameters, true, campus_name + available_slots);//todo
+            Helper.writelog("Server", null, campus_name, "Get Time slots", parameters, true, campus_name + available_slots);//todo
 
             return "success:" + campus_name + available_slots;
         }
@@ -328,7 +326,7 @@ public class Server implements CampusOperations {
                     if (date == null) {
                         String parameters = "Booking Id: " + booking_id + " Student_id: " + student_id;
                         message = "There are no rooms in the given date to delete";
-                        //Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
+                        Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
 
                         return "failed";
                     }
@@ -336,7 +334,7 @@ public class Server implements CampusOperations {
                         if (room_number == null) {
                             String parameters = "Booking Id: " + booking_id + " Student_id: " + student_id;
                             message = "There are no rooms to delete";
-                            //Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
+                            Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
 
                             return "failed";
                         }
@@ -345,7 +343,7 @@ public class Server implements CampusOperations {
                             String parameters = "Booking Id: " + booking_id + " Student_id: " + student_id;
                             message = "There are no rooms in the given date and room number to delete";
 
-                            //Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
+                            Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
                             return "failed";
                         }
 
@@ -361,7 +359,7 @@ public class Server implements CampusOperations {
                                 String parameters = "Booking Id: " + booking_id + " Student_id: " + student_id;
                                 message = "Booking Cancelled";
 
-                                //Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
+                                Helper.writelog("Server", null, campus_name, "Cancel Booking", parameters, true, message);//todo
 
                                 return "success";
                             }
@@ -384,7 +382,7 @@ public class Server implements CampusOperations {
         try {
             socket = new DatagramSocket();
 
-            byte[] message = ("cancel>>" + student_id + ">>" + booking_id).getBytes();
+            byte[] message = ("cancel-=" + student_id + "-=" + booking_id).getBytes();
             InetAddress aHost = InetAddress.getByName("localhost");
             int serverPort = Util.getCampusPort(booking_id.split("_")[1].substring(0, 3));
 
@@ -433,7 +431,7 @@ public class Server implements CampusOperations {
                 HashMap<Integer, List<RoomRecordClass>> rr = hashmap.get(new_date);
                 if (rr == null) {
                     String parameters = "Campus Name: " + new_campus_name + " Room Number: " + new_room_no + " Date: " + new_date + " Slots: " + new_time_slot;
-                    //Helper.writelog("Server", null, new_campus_name, "Check Availability", parameters, false, "There are no rooms in the given date to delete");//todo
+                    Helper.writelog("Server", null, new_campus_name, "Check Availability", parameters, false, "There are no rooms in the given date to delete");//todo
 
                     return availability;
                 }
@@ -441,7 +439,7 @@ public class Server implements CampusOperations {
                 List<RoomRecordClass> list_of_rr = rr.get(new_room_no);
                 if (list_of_rr == null) {
                     String parameters = "Campus Name: " + new_campus_name + " Room Number: " + new_room_no + " Date: " + new_date + " Slots: " + new_time_slot;
-                    //Helper.writelog("Server", null, new_campus_name, "Check Availability", parameters, false, "There are no rooms in the given date and room number to delete");//todo
+                    Helper.writelog("Server", null, new_campus_name, "Check Availability", parameters, false, "There are no rooms in the given date and room number to delete");//todo
 
                     return availability;
                 }
@@ -455,7 +453,7 @@ public class Server implements CampusOperations {
                     }
                 }
                 String parameters = "Campus Name: " + new_campus_name + " Room Number: " + new_room_no + " Date: " + new_date + " Slots: " + new_time_slot;
-                //Helper.writelog("Server", null, new_campus_name, "Check Availability", parameters, true, "Room Available");
+                Helper.writelog("Server", null, new_campus_name, "Check Availability", parameters, true, "Room Available");
 
                 return availability;
             }
@@ -469,7 +467,7 @@ public class Server implements CampusOperations {
         try {
             socket = new DatagramSocket();
 
-            byte[] message = ("checkAvailability>>" + new_campus_name + ">>" + new_room_no + ">>" + new_date + ">>" + new_time_slot).getBytes();
+            byte[] message = ("checkAvailability-=" + new_campus_name + "-=" + new_room_no + "-=" + new_date + "-=" + new_time_slot).getBytes();
             InetAddress aHost = InetAddress.getByName("localhost");
             int serverPort = Util.getCampusPort(new_campus_name);
 
@@ -497,11 +495,9 @@ public class Server implements CampusOperations {
                 byte[] buffer = new byte[1000];
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(request);
+                String[] data = new String(request.getData()).replace("\0", "").split("-=");
 
-                String[] data = new String(request.getData()).replace("\0", "").split(">>");
-
-
-                new MyThread(aSocket, data).start();
+                new MyThread(request, data).start();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -513,47 +509,65 @@ public class Server implements CampusOperations {
 
     private class MyThread extends Thread {
 
-        final DatagramSocket aSocket;
+        final DatagramPacket aPacket;
         final String[] data;
 
-        public MyThread(DatagramSocket socket, String[] data) {
-            aSocket = socket;
+        public MyThread(DatagramPacket packet, String[] data) {
+            aPacket = packet;
             this.data = data;
         }
 
         @Override
         public void run() {
-            queue.put(Integer.valueOf(data[0]), data);
-            if (Integer.valueOf(data[0]) == expected)
-                queue_function(data);
+            int seq;
+            try{
+                seq = Integer.valueOf(data[0]);
+                queue.put(seq, data);
+                if (seq == expected)
+                    processQueue(data);
+            }
+            catch (NumberFormatException e)
+            {
+                Server.this.processRequest(data, aPacket.getAddress().getHostName(), aPacket.getPort());
+            }
+
 
         }
     }
 
-    public void processQueue(String[] data) {
+    public void processQueue(String[] request) {
+        processRequest(Arrays.copyOfRange(request, 1, request.length), Util.FRONT_END_HOST, Util.FRONT_END_PORT );
+        queue.remove(expected);
+        expected++;
+        if (queue.containsKey(expected))
+            processQueue(queue.get(expected));
+    }
+
+    public void processRequest(String[] data, String host, int port) {
+        System.out.println(Arrays.deepToString(data));
         try {
             String message = "";
-            final String function = data[1];
+            final String function = data[0];
             if (function.equals("create")) {
-                String admin_id = data[2];
-                int room_number = Integer.valueOf(data[3]);
-                String date = data[4];
-                String slots[] = data[5].split(",");
+                String admin_id = data[1];
+                int room_number = Integer.valueOf(data[2]);
+                String date = data[3];
+                String slots[] = data[4].split(",");
 
                 message = createRoom(admin_id, room_number, date, slots);
             } else if (function.equals("delete")) {
-                String admin_id = data[2];
-                int room_number = Integer.valueOf(data[3]);
-                String date = data[4];
-                String slots[] = data[5].split(",");
+                String admin_id = data[1];
+                int room_number = Integer.valueOf(data[2]);
+                String date = data[3];
+                String slots[] = data[4].split(",");
 
                 message = deleteRoom(admin_id, room_number, date, slots);
             } else if (function.equals("book")) {
-                String student_id = data[2];
-                String campus_name = data[3];
-                int room_number = Integer.valueOf(data[4]);
-                String date = data[5];
-                String slots = data[6];
+                String student_id = data[1];
+                String campus_name = data[2];
+                int room_number = Integer.valueOf(data[3]);
+                String date = data[4];
+                String slots = data[5];
 
                 message = bookRoom(student_id, campus_name, room_number, date, slots);
             } else if (function.equals("cancel")) {
@@ -574,17 +588,19 @@ public class Server implements CampusOperations {
                 String date = data[5];
                 String slots = data[6];
                 message = changeReservation(old_booking_id, campus_name, room_number, date, slots, student_id);
-            } else { // availability
+            } else if (function.equals("availability")) {
                 String student_id = data[1];
                 String date = data[2];
                 message = getTimeSlotsCampus(date);
+            } else {
+                String student_id = data[1];
+                String date = data[2];
+                message = connectUDPServerForTimeSlot(date, campus_name);
             }
 
-
-            DatagramPacket reply = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName("localhost"), 90);
+            System.out.println(message);
+            DatagramPacket reply = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(host), port);
             aSocket.send(reply);
-
-            queue.remove(Integer.valueOf(data[0]));
         } catch (IOException e) {
 
         }

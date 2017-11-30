@@ -4,15 +4,13 @@ import app.rm.replica.Replica;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class ReplicaImplR extends Replica<Server> {
     public static HashMap<String, HashMap<Integer, List<RoomRecordClass>>> KKL_data = new HashMap<>();
     public static HashMap<String, HashMap<Integer, List<RoomRecordClass>>> WST_data = new HashMap<>();
     public static HashMap<String, HashMap<Integer, List<RoomRecordClass>>> DVL_data = new HashMap<>();
+
     public static HashMap<String, Integer> student_booking = new HashMap<>();
     public static HashMap<Integer, String[]> queue;
     public static int expected = 1;
@@ -20,6 +18,7 @@ public class ReplicaImplR extends Replica<Server> {
 
     public ReplicaImplR(boolean hasError) {
         super(hasError);
+        queue = new HashMap<>();
     }
 
     @Override
@@ -36,13 +35,12 @@ public class ReplicaImplR extends Replica<Server> {
             if (campus.equals("KKL")) {
                 server = new Server(KKL_data, student_booking, campus, queue, expected);
             } else if (campus.equals("DVL")) {
-                server = new Server(DVL_data, student_booking, campus,queue ,expected );
+                server = new Server(DVL_data, student_booking, campus, queue, expected);
             } else {
-                server = new Server(WST_data, student_booking, campus,queue ,expected );
+                server = new Server(WST_data, student_booking, campus, queue, expected);
             }
             serverMap.put(campus, server);
             server.start();
-
         }
     }
 
@@ -63,7 +61,66 @@ public class ReplicaImplR extends Replica<Server> {
 
     @Override
     protected void mapJsonToData(String json) {
+        JSONObject database = new JSONObject(json);
 
+        expected = database.getInt("expected_sequence_number");
+
+        JSONArray room_records_array = database.getJSONArray("room_records");
+        JSONArray student_booking_array = database.getJSONArray("student_booking");
+
+        student_booking = new HashMap<>();
+
+        HashMap<String, HashMap<Integer, List<RoomRecordClass>>> campus_data = new HashMap<>();
+
+
+        for (int stu_record_num = 0; stu_record_num < student_booking_array.length(); stu_record_num++) {
+            JSONObject student = student_booking_array.getJSONObject(stu_record_num);
+            student_booking.put(student.getString("student_id"), student.getInt("booking_id"));
+        }
+
+        for (int campus_record_num = 0; campus_record_num < room_records_array.length(); campus_record_num++) {
+            String campus = room_records_array.getJSONObject(campus_record_num).get("campus").toString();
+
+
+            JSONObject room_records_object = room_records_array.getJSONObject(campus_record_num);
+            JSONArray data = room_records_object.getJSONArray("data");
+            for (int campus_data_num = 0; campus_data_num < data.length(); campus_data_num++) {
+                JSONObject data_object = data.getJSONObject(campus_data_num);
+                String date = data_object.getString("date");
+                JSONArray rooms_array = data_object.getJSONArray("rooms");
+                HashMap<Integer, List<RoomRecordClass>> room_data = new HashMap<>();
+                for (int rooms_num = 0; rooms_num < rooms_array.length(); rooms_num++) {
+                    JSONObject rooms_object = rooms_array.getJSONObject(rooms_num);
+                    int room_number = (rooms_object.getInt("room"));
+                    JSONArray records_array = rooms_object.getJSONArray("records");
+                    List<RoomRecordClass> room_record_list = new ArrayList<>();
+                    for (int records_num = 0; records_num < records_array.length(); records_num++) {
+                        JSONObject records_object = records_array.getJSONObject(records_num);
+                        String time_slot = records_object.getString("time_slot");
+                        String booked_by = null;
+                        String booking_id = null;
+                        if (records_object.has("booked_by")) {
+                            booked_by = records_object.getString("booked_by");
+                            booking_id = records_object.getString("booking_id");
+                        }
+                        RoomRecordClass obj = new RoomRecordClass(time_slot, booked_by, booking_id);
+                        room_record_list.add(obj);
+                    }
+
+                    room_data.put(room_number, room_record_list);
+                }
+
+                campus_data.put(date, room_data);
+            }
+
+            if (campus.equals("KKL")) {
+                KKL_data = campus_data;
+            } else if (campus.equals("DVL")) {
+                DVL_data = campus_data;
+            } else {
+                WST_data = campus_data;
+            }
+        }
     }
 
     @Override
@@ -101,6 +158,7 @@ public class ReplicaImplR extends Replica<Server> {
                     rooms.put(room_records);
                 }
                 date_rooms.put("rooms", rooms);
+                data.put(date_rooms);
             }
             campusData.put("data", data);
             data_array.put(campusData);
@@ -110,11 +168,13 @@ public class ReplicaImplR extends Replica<Server> {
         for (String student_id : student_booking.keySet()) {
             JSONObject student_booking_obj = new JSONObject();
             student_booking_obj.put("student_id", student_id);
-            student_booking_obj.put("booking_count",student_booking.get(student_id));
+            student_booking_obj.put("booking_count", student_booking.get(student_id));
             student_booking_array.put(student_booking_obj);
         }
         database.put("room_records", data_array);
-        return database.toString();
+        database.put("student_booking", student_booking_array);
+        database.put("expected_sequence_number", expected);
+        return database.toString(4);
     }
 
     @Override
