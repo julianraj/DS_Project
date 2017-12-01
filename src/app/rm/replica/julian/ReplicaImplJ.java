@@ -173,29 +173,6 @@ public class ReplicaImplJ extends Replica<Server> {
         return myData.toString(4);
     }
 
-    @Override
-    public boolean ping(String campus) {
-        System.out.println("ping " + campus + " server...");
-        try {
-            DatagramSocket socket = new DatagramSocket();
-            final InetAddress host = InetAddress.getByName("localhost");
-            DatagramPacket request = new DatagramPacket("ping".getBytes(), 4, host, Util.getCampusPort(campus, replicaIndex));
-            socket.send(request);
-
-            byte[] buffer = new byte[2048];
-            DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-            socket.setSoTimeout(4000);
-            try {
-                socket.receive(reply);
-                return true;
-            } catch (SocketTimeoutException e) {
-            }
-        } catch (IOException e) {
-            System.out.println(campus + ": " + e.getMessage());
-        }
-        return false;
-    }
-
     private void preFillData(String campus) {
         mData.get(campus);
         HashMap<Integer, List<RoomRecord>> rooms = new HashMap<>();

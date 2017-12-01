@@ -17,7 +17,7 @@ public class Util {
 
     public static final String FRONT_END_HOST = "192.168.2.19";
     public static final String SEQUENCER_HOST = "192.168.2.19";
-    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"192.168.2.23", "192.168.2.23", "192.168.2.19", "192.168.2.19"};
+    public static final String[] REPLICA_MANAGER_HOSTS = new String[]{"192.168.2.19", "192.168.2.19", "192.168.2.19", "192.168.2.19"};
 
     public static int getCampusPort(String campus, int i) {
         int port;

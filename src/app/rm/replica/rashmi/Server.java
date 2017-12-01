@@ -539,7 +539,7 @@ public class Server implements CampusOperations {
     }
 
     public void processQueue(String[] request) {
-        processRequest(Arrays.copyOfRange(request, 2, request.length), Util.FRONT_END_HOST, Integer.valueOf(request[1]),false);
+        processRequest(Arrays.copyOfRange(request, 2, request.length), Util.FRONT_END_HOST, Integer.valueOf(request[1]), false);
         queue.remove(expected.get());
         expected.incrementAndGet();
         if (queue.containsKey(expected.get()))
@@ -551,6 +551,9 @@ public class Server implements CampusOperations {
         try {
             String message = "";
             final String function = data[0];
+            if (function.equals("ping")) {
+                message = "pinged";
+            }
             if (function.equals("create")) {
                 String admin_id = data[1];
                 int room_number = Integer.valueOf(data[2]);
@@ -601,9 +604,8 @@ public class Server implements CampusOperations {
                 message = connectUDPServerForTimeSlot(date, campus);
             }
 
-            if(!local)
-            {
-                message = replicaIndex+ "-=" + message;
+            if (!local) {
+                message = replicaIndex + "-=" + message;
             }
             System.out.println(message);
             DatagramPacket reply = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(host), port);

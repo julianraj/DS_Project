@@ -96,39 +96,16 @@ public class FrontEndImpl extends ServerPOA {
             List<String> resultList = new ArrayList<>();
             List<String> errorCheckList = new ArrayList<>();
             try {
-                //==== remove this ======
-//                byte[] buffer = new byte[2048];
-//                DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-//                fSocket.receive(reply);
-//                String response = new String(reply.getData()).replace("\0", "");
-//                result = response;
-//                System.out.println(result);
-
-//                DatagramSocket errorSocket = new DatagramSocket();
-//                byte[] errMessage = ("error").getBytes();
-//                errorSocket.send(new DatagramPacket(errMessage, errMessage.length, reply.getAddress(), Util.REPLICA_MANAGER_PORT));
-//                errorSocket.close();
-                //=======================
-
                 for (int i = 0; i < 4; i++) {
                     byte[] buffer = new byte[2048];
                     DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                     fSocket.receive(reply);
                     String response = new String(reply.getData()).replace("\0", "");
                     String actualResponse = response.split("-=")[1];
-                    System.out.println("res: " + response + "/" + actualResponse);
-                    if (!resultList.contains(actualResponse)) {
-                        /*if (result != null && !actualResponse.equals(result)) {
-                            error = true;
-                        }*/
-                    } else {
+                    if (resultList.contains(actualResponse)) {
                         if (result == null) {
                             result = actualResponse;
                             fSocket.setSoTimeout(2000);
-                        } else {
-                            /*if (!actualResponse.equals(result)) {
-                                error = true;
-                            }*/
                         }
                     }
                     resultList.add(actualResponse);

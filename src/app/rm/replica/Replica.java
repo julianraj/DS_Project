@@ -29,7 +29,7 @@ public abstract class Replica<S> {
             public void run() {
                 try {
                     mSocket = new DatagramSocket(null);
-                    mSocket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Util.REPLICA_PORT[replicaIndex]));
+                    mSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]), Util.REPLICA_PORT[replicaIndex]));
                     while (true) {
                         try {
                             byte[] buffer = new byte[2048];
@@ -59,27 +59,31 @@ public abstract class Replica<S> {
 
     protected void requestData() {
         System.out.println("requesting data...");
-        for (String hostName : Util.REPLICA_MANAGER_HOSTS) {
-            new Thread(() -> {
-                try {
-                    DatagramSocket socket = new DatagramSocket();
-                    final InetAddress host = InetAddress.getByName(hostName);
-                    DatagramPacket request = new DatagramPacket("getData".getBytes(), 7, host, Util.REPLICA_PORT[replicaIndex]);
-                    socket.send(request);
+        for (int i = 0; (i < Util.REPLICA_MANAGER_HOSTS.length); i++) {
+            final int index = i;
+            if (index != replicaIndex) {
+                new Thread(() -> {
+                    try {
+                        DatagramSocket socket = new DatagramSocket();
+                        final InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[index]);
+                        DatagramPacket request = new DatagramPacket("getData".getBytes(), 7, host, Util.REPLICA_PORT[index]);
+                        socket.send(request);
 
-                    byte[] buffer = new byte[4096];
-                    DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-                    socket.setSoTimeout(6000);
-                    socket.receive(reply);
-                    if (!dataCopied) {
-                        dataCopied = true;
-                        String json = new String(buffer).replace("\0", "");
-                        mapJsonToData(json);
-                        System.out.println("Data copied from working replica");
+                        byte[] buffer = new byte[4096];
+                        DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+                        socket.setSoTimeout(3000);
+                        socket.receive(reply);
+                        if (!dataCopied) {
+                            dataCopied = true;
+                            String json = new String(buffer).replace("\0", "");
+                            mapJsonToData(json);
+                            System.out.println("Data copied from working replica: " + json);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                }
-            }).start();
+                }).start();
+            }
         }
     }
 
@@ -98,5 +102,25 @@ public abstract class Replica<S> {
 
     protected abstract String mapDataToJson();
 
-    public abstract boolean ping(String campus);
+    public boolean ping(String campus){
+        System.out.println("ping " + campus + " server...");
+        try {
+            DatagramSocket socket = new DatagramSocket();
+            final InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            DatagramPacket request = new DatagramPacket("ping".getBytes(), 4, host, Util.getCampusPort(campus, replicaIndex));
+            socket.send(request);
+
+            byte[] buffer = new byte[2048];
+            DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+            socket.setSoTimeout(4000);
+            try {
+                socket.receive(reply);
+                return true;
+            } catch (SocketTimeoutException e) {
+            }
+        } catch (IOException e) {
+            System.out.println(campus + ": " + e.getMessage());
+        }
+        return false;
+    }
 }

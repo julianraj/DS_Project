@@ -45,7 +45,6 @@ public class Server implements ServerOperations {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     mSocket.receive(packet);
 
-                    System.out.println(mCampusName + " le paayo");
                     new ProcessThread(packet).start();
                 } catch (SocketException e) {
                 }
@@ -211,7 +210,7 @@ public class Server implements ServerOperations {
     }
 
     private String getAvailableTimeSlots(String studentID, String date, boolean flag) {
-//        if (hasError) return mCampusName + "0";
+        if (hasError) return mCampusName + "0";
 
         String returnMessage;
         int count = 0;
@@ -279,7 +278,7 @@ public class Server implements ServerOperations {
         logMessage += "\nServer response: " + ((response.contains("failed")) ? "Could not perform your request." : response);
         Util.writeLog(mCampusName + "-server.log", logMessage);
 
-        return response.split(",")[0];
+        return response.split(":")[0];
     }
 
     @Override
@@ -477,7 +476,7 @@ public class Server implements ServerOperations {
     }
 
     private void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
-        System.out.println(mCampusName + ":" + fromQueue + "/message: " + Arrays.deepToString(data));
+//        System.out.println(mCampusName + ":" + fromQueue + "/message: " + Arrays.deepToString(data));
         String response = "";
         if (data[0].equals("ping")) {
         } else if (data[0].equals("create")) {
