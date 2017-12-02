@@ -11,6 +11,7 @@ public abstract class Replica<S> {
     public static final String campuses[] = new String[]{"KKL", "DVL", "WST"};
 
     protected boolean hasError;
+    protected boolean isAvailable = true;
     protected boolean dataCopied = false;
     protected final int replicaIndex;
     protected Map<String, S> serverMap;
@@ -21,6 +22,11 @@ public abstract class Replica<S> {
         this.replicaIndex = replicaIndex;
         this.hasError = hasError;
         serverMap = new HashMap<>();
+    }
+
+    public Replica(int replicaIndex, boolean hasError, boolean isAvailable) {
+        this(replicaIndex, hasError);
+        this.isAvailable = isAvailable;
     }
 
     private void startListening() {
@@ -37,7 +43,6 @@ public abstract class Replica<S> {
                             mSocket.receive(packet);
 
                             String request = new String(packet.getData()).replace("\0", "");
-                            System.out.println("replica request:" + request);
                             if (request.contains("getData")) {
                                 String response = mapDataToJson();
                                 DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
@@ -77,8 +82,10 @@ public abstract class Replica<S> {
                             dataCopied = true;
                             String json = new String(buffer).replace("\0", "");
                             mapJsonToData(json);
-                            System.out.println("Data copied from working replica: " + json);
+                            System.out.println("Data copied from working replica");
                         }
+                    }catch (SocketTimeoutException e){
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -88,8 +95,10 @@ public abstract class Replica<S> {
     }
 
     public void start() {
-        startListening();
-        start(false);
+        if (isAvailable) {
+            startListening();
+            start(false);
+        }
     }
 
     protected abstract void start(boolean requestData);
@@ -102,7 +111,7 @@ public abstract class Replica<S> {
 
     protected abstract String mapDataToJson();
 
-    public boolean ping(String campus){
+    public boolean ping(String campus) {
         System.out.println("ping " + campus + " server...");
         try {
             DatagramSocket socket = new DatagramSocket();

@@ -34,13 +34,13 @@ public class Server implements CampusOperations {
         this.expected = expected;
         this.replicaIndex = replicaIndex;
 
-        List<RoomRecordClass> list_time_slots = new ArrayList<>();
+        /*List<RoomRecordClass> list_time_slots = new ArrayList<>();
         list_time_slots.add(new RoomRecordClass("9-12", null, null));
         list_time_slots.add(new RoomRecordClass("12-15", null, null));
         list_time_slots.add(new RoomRecordClass("15-18", null, null));
         HashMap<Integer, List<RoomRecordClass>> room_record = new HashMap<>();
         room_record.put(201, list_time_slots);
-        this.hashmap.put("11-11-2017", room_record);
+        this.hashmap.put("11-11-2017", room_record);*/
     }
 
     public void start() {
@@ -553,8 +553,7 @@ public class Server implements CampusOperations {
             final String function = data[0];
             if (function.equals("ping")) {
                 message = "pinged";
-            }
-            if (function.equals("create")) {
+            }else if (function.equals("create")) {
                 String admin_id = data[1];
                 int room_number = Integer.valueOf(data[2]);
                 String date = data[3];

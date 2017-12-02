@@ -17,8 +17,8 @@ public class ReplicaImplJ extends Replica<Server> {
     private static Timer timer = new Timer(true);
     private static TimerTask calendarTask;
 
-    public ReplicaImplJ(int replicaIndex, boolean hasError) {
-        super(replicaIndex, hasError);
+    public ReplicaImplJ(int replicaIndex, boolean hasError, boolean isAvailable) {
+        super(replicaIndex, hasError, isAvailable);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class ReplicaImplJ extends Replica<Server> {
             for (String campus : campuses) {
                 if (!requestData) mData.put(campus, new HashMap<>());
 
-                preFillData(campus);
+                //preFillData(campus);
                 startServer(campus);
             }
 
@@ -92,7 +92,7 @@ public class ReplicaImplJ extends Replica<Server> {
                             List<RoomRecord> records = new ArrayList<>();
 
                             for (int l = 0; l < recordData.length(); l++) {
-                                JSONObject recordObj = recordData.getJSONObject(i);
+                                JSONObject recordObj = recordData.getJSONObject(l);
                                 RoomRecord record = new RoomRecord();
                                 record.setTimeSlot(recordObj.getString("time_slot"));
                                 if (recordObj.has("booked_by")) {

@@ -71,7 +71,7 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                             HashMap<String, Record> records = new HashMap<>();
 
                             for (int l = 0; l < recordData.length(); l++) {
-                                JSONObject recordObj = recordData.getJSONObject(i);
+                                JSONObject recordObj = recordData.getJSONObject(l);
 
                                 Record record = null;
                                 if (recordObj.has("booked_by")) {

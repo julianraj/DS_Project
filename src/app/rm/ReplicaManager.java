@@ -29,16 +29,19 @@ public class ReplicaManager {
         if (args.length > 1) {
             hasError = Boolean.parseBoolean(args[1]);
         }
+        if (args.length > 2) {
+            available = Boolean.parseBoolean(args[2]);
+        }
 
         switch (replicaNum) {
             case 3:
-                replica = new ReplicaImplJ(replicaNum, hasError);
-                replicaBackup = new ReplicaImplJ(replicaNum, hasError);
+                replica = new ReplicaImplJ(replicaNum, hasError, available);
+                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
                 replica.start();
                 break;
             case 2:
-                replica = new ReplicaImplJ(replicaNum, hasError);
-                replicaBackup = new ReplicaImplJ(replicaNum, false);
+                replica = new ReplicaImplJ(replicaNum, hasError, available);
+                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
                 replica.start();
                 break;
             case 1:
@@ -71,7 +74,8 @@ public class ReplicaManager {
                 String request = new String(packet.getData()).replace("\0", "");
                 if (request.startsWith("error")) {
                     if (request.endsWith("not-available")) {
-                        //handleNoResponseFailure();
+                        System.out.println("handle crash failure");
+                        handleNoResponseFailure();
                     } else {
                         //handle byzantine failure
                         String correctResponse = request.split(":")[1];
@@ -108,10 +112,17 @@ public class ReplicaManager {
         if (replica != null) {
             new Thread(() -> {
                 boolean available = replica.ping(campus);
-                if (!available && replica != null) {
-                    replica.stop();
-                    replica = null;
-                    replicaBackup.restart();
+                System.out.println(campus + " ping: " + available);
+                try {
+                    synchronized (replica) {
+                        if (!available && replica != null) {
+                            System.out.println("start backup replica!!");
+                            replica.stop();
+                            replica = null;
+                            replicaBackup.restart();
+                        }
+                    }
+                } catch (NullPointerException ne) {
                 }
             }).start();
         }

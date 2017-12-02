@@ -60,6 +60,7 @@ public class Server implements ServerOperations {
         notKilled = false;
         if (mSocket != null) {
             mSocket.close();
+            System.out.println(mCampusName + " socket.close");
             mSocket = null;
         }
     }
@@ -210,7 +211,7 @@ public class Server implements ServerOperations {
     }
 
     private String getAvailableTimeSlots(String studentID, String date, boolean flag) {
-        if (hasError) return mCampusName + "0";
+        if (hasError) return mCampusName + "99";
 
         String returnMessage;
         int count = 0;
@@ -476,7 +477,6 @@ public class Server implements ServerOperations {
     }
 
     private void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
-//        System.out.println(mCampusName + ":" + fromQueue + "/message: " + Arrays.deepToString(data));
         String response = "";
         if (data[0].equals("ping")) {
         } else if (data[0].equals("create")) {
