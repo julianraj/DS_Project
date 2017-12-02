@@ -1,4 +1,4 @@
-package model;
+package app.rm.replica.akshita;
 
 public class Slot {
   private String timeSlot;
