@@ -1,4 +1,4 @@
-package server;
+package app.rm.replica.akshita;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
