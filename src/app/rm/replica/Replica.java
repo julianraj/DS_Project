@@ -43,6 +43,7 @@ public abstract class Replica<S> {
                             mSocket.receive(packet);
 
                             String request = new String(packet.getData()).replace("\0", "");
+                            System.out.println("replica request:" + request);
                             if (request.contains("getData")) {
                                 String response = mapDataToJson();
                                 DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), packet.getAddress(), packet.getPort());
@@ -64,13 +65,13 @@ public abstract class Replica<S> {
 
     protected void requestData() {
         System.out.println("requesting data...");
-        for (int i = 0; (i < Util.REPLICA_MANAGER_HOSTS.length); i++) {
+        for (int i = 0; (i < Util.REPLICA_HOSTS.length); i++) {
             final int index = i;
             if (index != replicaIndex) {
                 new Thread(() -> {
                     try {
                         DatagramSocket socket = new DatagramSocket();
-                        final InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[index]);
+                        final InetAddress host = InetAddress.getByName(Util.REPLICA_HOSTS[index]);
                         DatagramPacket request = new DatagramPacket("getData".getBytes(), 7, host, Util.REPLICA_PORT[index]);
                         socket.send(request);
 

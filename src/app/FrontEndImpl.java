@@ -141,10 +141,10 @@ public class FrontEndImpl extends ServerPOA {
 
         private void sendMessageToRMs(String message) {
             try {
-                for (int i = 0; i < Util.REPLICA_MANAGER_HOSTS.length; i++) {
+                for (int i = 0; i < Util.REPLICA_HOSTS.length; i++) {
                     DatagramSocket errorSocket = new DatagramSocket();
                     byte[] errMessage = message.getBytes();
-                    errorSocket.send(new DatagramPacket(errMessage, errMessage.length, InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[i]), Util.REPLICA_MANAGER_PORT[i]));
+                    errorSocket.send(new DatagramPacket(errMessage, errMessage.length, InetAddress.getByName(Util.REPLICA_HOSTS[i]), Util.REPLICA_MANAGER_PORT[i]));
                     errorSocket.close();
                 }
             } catch (IOException ioe) {
