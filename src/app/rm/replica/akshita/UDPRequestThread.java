@@ -1,13 +1,11 @@
-package server;
+package app.rm.replica.akshita;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-import model.RoomRecord;
-
 public class UDPRequestThread implements Runnable{
-	
+
 	
 	DatagramSocket socket = null;
     DatagramPacket request = null;

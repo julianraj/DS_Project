@@ -1,4 +1,4 @@
-package server;
+package app.rm.replica.akshita;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -38,6 +38,7 @@ public final class UDPThrift {
                 byte[] buffer = new byte[1000];
 				DatagramPacket request = new DatagramPacket(buffer, buffer.length);
 	  			aSocket.receive(request);
+	  			//queue
 	  			threadPool.execute( new UDPRequestThread(aSocket, request));  
 			  }
 		   }catch (SocketException e){ 
