@@ -59,7 +59,7 @@ public abstract class Replica<S> {
 
     protected void requestData() {
         System.out.println("requesting data...");
-        for (String hostName : Util.REPLICA_MANAGER_HOSTS) {
+        for (String hostName : Util.REPLICA_HOSTS) {
             new Thread(() -> {
                 try {
                     DatagramSocket socket = new DatagramSocket();

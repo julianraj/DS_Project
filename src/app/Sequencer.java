@@ -27,9 +27,9 @@ public class Sequencer {
                 byte[] forwardMessage = (String.format("%04d", sequenceNumber) + "-=" + request).getBytes();
                 System.out.println("request: " + new String(forwardMessage));
                 sequenceNumber += 1;
-                for (int i = 0; i < Util.REPLICA_MANAGER_HOSTS.length; i++) {
+                for (int i = 0; i < Util.REPLICA_HOSTS.length; i++) {
                     DatagramPacket forward = new DatagramPacket(forwardMessage, forwardMessage.length,
-                            InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[i]), Util.getCampusPort(campus, i));
+                            InetAddress.getByName(Util.REPLICA_HOSTS[i]), Util.getCampusPort(campus, i));
                     socket.send(forward);
                 }
             }

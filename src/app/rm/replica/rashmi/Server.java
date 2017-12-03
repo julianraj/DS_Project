@@ -228,7 +228,7 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message = ("book-=" + student_id + "-=" + campus_name + "-=" + room_number + "-=" + date + "-=" + slots).getBytes();
-            InetAddress aHost = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            InetAddress aHost = InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]);
             int serverPort = Util.getCampusPort(campus_name, replicaIndex);
 
             DatagramPacket request = new DatagramPacket(message, message.length, aHost, serverPort);
@@ -254,7 +254,7 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message;
-            InetAddress aHost = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            InetAddress aHost = InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]);
             int serverPort = Util.getCampusPort("KKL", replicaIndex);
             message = ("timeslot-=" + date + "-=KKL").getBytes();
             reply += requestCampusServer(serverPort, message, aHost, socket);
@@ -388,7 +388,7 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message = ("cancel-=" + student_id + "-=" + booking_id).getBytes();
-            InetAddress aHost = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            InetAddress aHost = InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]);
             int serverPort = Util.getCampusPort(booking_id.substring(0, 3), replicaIndex);
 
             DatagramPacket request = new DatagramPacket(message, message.length, aHost, serverPort);
@@ -473,7 +473,7 @@ public class Server implements CampusOperations {
             socket = new DatagramSocket();
 
             byte[] message = ("checkAvailability-=" + new_campus_name + "-=" + new_room_no + "-=" + new_date + "-=" + new_time_slot).getBytes();
-            InetAddress aHost = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            InetAddress aHost = InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]);
             int serverPort = Util.getCampusPort(new_campus_name, replicaIndex);
 
 
@@ -495,7 +495,7 @@ public class Server implements CampusOperations {
     private void UDPConnection() {
         try {
             aSocket = new DatagramSocket(null);
-            aSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]), Util.getCampusPort(campus_name, replicaIndex)));
+            aSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]), Util.getCampusPort(campus_name, replicaIndex)));
             while (true) {
                 byte[] buffer = new byte[1000];
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);

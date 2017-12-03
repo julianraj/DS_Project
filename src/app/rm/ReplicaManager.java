@@ -60,7 +60,7 @@ public class ReplicaManager {
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket(null);
-            socket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaNum]), Util.REPLICA_MANAGER_PORT[replicaNum]));
+            socket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_HOSTS[replicaNum]), Util.REPLICA_MANAGER_PORT[replicaNum]));
 
             while (true) {
                 byte[] buffer = new byte[2048];
