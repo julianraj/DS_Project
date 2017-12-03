@@ -8,13 +8,21 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
+
+import ServerImpl.ServerDetails;
+import ServerImpl.getDataFromUDP;
+import record.Record;
 
 public class ServerImpl implements ServerInterfaceOperations {
 
-    private static final String id = null;
-    private int expectedSequenceNumber;
-
+	 private static final String id = null;
+	    private static String NULL = null;
+	    private int expectedSequenceNumber;
+	    ConnectionListener cl;
+	    public String bookingReply="";
+	    
     // server details
     public enum ServerDetails {
         KKL("KRIKLAND-SERVER", "KKL", "127.0.0.1", 1092, 0001), DVL("DORVAL-SERVER", "DVL", "127.0.0.1", 1091, 0001), WST("WESTMOUNT-SERVER", "WST", "127.0.0.1", 1093, 0001);
@@ -66,11 +74,14 @@ public class ServerImpl implements ServerInterfaceOperations {
         this.currentServer = currentServer;
         init();
     }
-
-    public void start(){
-
-    }
-
+    
+    public ServerDetails[] getOtherServer() {
+		ServerDetails[] serverDatas = ServerDetails.values();
+		for(int i=0; i<serverDatas.length; i++)
+			if(serverDatas[i].equals(currentServer))
+				serverDatas[i] = null;
+		return serverDatas;
+	}
     /**
      * initializes server object with default values also creates log files for
      * the server initializes File Reader and Writer
@@ -81,7 +92,14 @@ public class ServerImpl implements ServerInterfaceOperations {
             logFile = new File("log_" + currentServer.tag + ".log");
             if (!logFile.exists())
                 logFile.createNewFile();
-            pw = new PrintWriter(new BufferedWriter(new FileWriter(logFile)));
+            pw = new PrintWriter(new BufferedWriter(new public ServerDetails[] getOtherServer() {
+        		ServerDetails[] serverDatas = ServerDetails.values();
+        		for(int i=0; i<serverDatas.length; i++)
+        			if(serverDatas[i].equals(currentServer))
+        				serverDatas[i] = null;
+        		return serverDatas;
+        	}
+ FileWriter(logFile)));
         } catch (IOException exc) {
             System.out.println("Error in creating log File: " + exc.toString());
         }
@@ -106,10 +124,45 @@ public class ServerImpl implements ServerInterfaceOperations {
      * Creates a new Connection Listener Object using multi-threading This
      * listener opens UDP socket to get requests from other server
      */
-    private void activateListener() {
+    public void activateListener() {
         Thread t = new Thread(new ConnectionListener(this));
-        t.start();
+        t.start(); 
     }
+    public void stop() {
+    	cl = new ConnectionListener(this);
+    	cl.stop();
+    }
+    
+    public void restart() {
+    	stop();
+    	activateListener();
+    }
+    
+    class getDataFromUDP implements Runnable{
+
+		CountDownLatch signal = null;
+		String query = null;
+		int port = 0;
+		public getDataFromUDP(CountDownLatch latch,int n_port,String n_query){
+			this.signal = latch;
+			this.port = n_port;
+			this.query = n_query;
+		}
+    private boolean contactOtherServers(String query) {
+	    //gather data from two other server
+	    CountDownLatch latch = new CountDownLatch(ServerDetails.values().length-1);
+	    for(ServerDetails s : getOtherServer())
+			if(s!=null)
+				new Thread((Runnable) new getDataFromUDP(latch,s.port,query)).start();
+		try {
+			//wait until got response from all other servers 
+			latch.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return true;
+	}
 
     public String createRoom(String roomNo, String date, String timeSlot) {
         int flag = 1;
@@ -153,8 +206,13 @@ public class ServerImpl implements ServerInterfaceOperations {
 
     public String bookRoom(String campusName, String roomNo, String date, String timeSlot, String studentID, String bookingID) {
         String id = currentServer.tag.charAt(0) + "B" + idNo;
-        idNo++;
+        String tmp = null;
+        int limit = Record.checkLimit(studentID);
         synchronized (lock) {
+        	if(limit >= 3) {
+    			return "OverBooked";
+    		}
+        	else {
             if (roomRecords.get(date).get(roomNo).containsKey(timeSlot == null)) {
                 roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
                 System.out.println("Room Booked");
@@ -162,10 +220,19 @@ public class ServerImpl implements ServerInterfaceOperations {
             } else if (roomRecords.get(date).get(roomNo).containsKey(timeSlot != null)) {
                 System.out.println("Booking Already exists");
             }
-            return id;
+				bookingReply="";
+				String message = "book-=ID="+studentID+"-=ROOMNUMBER="+roomNo+"-=DATE="+date+"-=SLOT="+timeSlot+"-=";
+				contactOtherServers(message);			
+			    tmp = bookingReply;
+			}
+			if(!tmp.equals("fail")){
+				Record.studentBookingCounter.put(studentID, limit+1);
+			return id;
+			}
         }
-    }
-
+		return tmp;
+		}
+    
     public String getTimeSlots(String date) {
         Stream<Object> slotList;
         slotList = roomRecords.entrySet().stream().map((e) -> e.getValue());
@@ -195,10 +262,16 @@ public class ServerImpl implements ServerInterfaceOperations {
     }
 
     public boolean cancelRoom(String bookingID, String studentID) {
-        synchronized (lock) {
-            String timeSlot = null;
-            String roomNo = null;
-            String date = null;
+		Integer tmp = Record.studentBookingCounter.get(studentID);
+		String timeSlot = null;
+        String roomNo = null;
+        String date = null;
+		synchronized (lock) {
+		if(tmp== null || (tmp-1) <0){
+			return false;
+		}
+		String issuccess = null;
+		String campusName = bookingID.split("_")[0];
             if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
                 System.out.println("Booking doesnot exist");
                 writeToLogFile("failed : booking from your id doesnot exist " + id);
@@ -207,9 +280,20 @@ public class ServerImpl implements ServerInterfaceOperations {
                 roomRecords.get(date).get(roomNo).remove(timeSlot, null);
                 System.out.println("Room Booking deleted");
                 writeToLogFile("success: Booking successfully cancelled for Student " + id);
+                String message = "cancel-=ID="+studentID+"-=BOOKINGID="+bookingID+"-=";
+        		contactOtherServers(message);
+    			issuccess = cancelReply;
             }
+            if(issuccess.equals("done")){
+    			Record.studentBookingCounter.put(studentID,tmp-1);			
+    			writeToLogFile("Canceled the booking "+bookingID);
+            }
+    			else{
+    				writeToLogFile("Failed to cancel the booking "+bookingID);
+    				return false;
+    			}
         }
-        return false;
+        return true;
     }
 
     public String changeBooking(String bookingID, String newCampusName, String newroomNo, String newtimeSlot) {
@@ -332,56 +416,5 @@ public class ServerImpl implements ServerInterfaceOperations {
                 }
             }
         }
-    }
-
-    private String getTimeSlots(String string, String string2, String string3) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    private String cancelBooking(String string, String string2) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    private String deleteRoom(String adminID, Integer valueOf, String date, String[] split) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    private String createRoom(String adminID, Integer valueOf, String date, String[] split) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean createRoom(String adminID, int roomNo, String date, String timeSlot) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean deleteRoom(String adminID, int roomNo, String date, String timeSlot) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean bookRoom(String studentID, String campusName, int roomNo, String date, String timeSlot) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean getTimeSlots(String studentID, String date) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean changeBooking(String studentID, String bookingID, String campusName, int roomNo, String date,
-                                 String timeSlot) {
-        // TODO Auto-generated method stub
-        return false;
     }
 }
