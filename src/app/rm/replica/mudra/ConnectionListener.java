@@ -5,6 +5,8 @@ import java.net.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import app.Util;
+
 public class ConnectionListener implements Runnable {
     public ServerImpl server;
     DatagramSocket aSocket;
@@ -67,6 +69,14 @@ class RequestExecutor extends Thread {
             String[] req = data.split("-=");
             DatagramPacket reply;
             String response;
+            InetAddress host = InetAddress.getByName(Util.FRONT_END_HOST);
+            int port = Util.FRONT_END_PORT;
+            boolean isRedirect = false;
+            if (!isRedirect) {
+            server.handleRequest(req, host, port);
+            } else {
+            server.processRequest(req, host, port, false);
+            }
 			switch (req[1]) {
                 case "createRoom" :
                 	// create response message
