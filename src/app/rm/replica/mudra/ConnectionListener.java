@@ -5,22 +5,21 @@ import java.net.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class ConnectionListener implements Runnable {
-    private ServerImpl server;
-
+    public ServerImpl server;
+    DatagramSocket aSocket;
     public ConnectionListener(ServerImpl server) {
         this.server = server;
     }
 
     @Override
     public void run() {
-        DatagramSocket aSocket = null;
+        
         try {
             // create a DatagramSocket to receive request and send response
             aSocket = new DatagramSocket(server.currentServer.port);
 
-            // continuesly listen to receive data
+            // continuously listen to receive data
             while (true) {
                 // create a blank 1000 bytes array to wrap data
                 byte[] buffer = new byte[1000];
@@ -41,6 +40,10 @@ public class ConnectionListener implements Runnable {
                 aSocket.close();
         }
     }
+
+	public void stop() {
+		aSocket.close();
+	}
 }
 
 class RequestExecutor extends Thread {
@@ -64,14 +67,6 @@ class RequestExecutor extends Thread {
             String[] req = data.split("-=");
             DatagramPacket reply;
             String response;
-            InetAddress host = InetAddress.getByName(Util.FRONT_END_HOST);
-            int port = Util.FRONT_END_PORT;
-            boolean isRedirect = false;
-            if (!isRedirect) {
-                handleRequest(data, host, port);
-            } else {
-                processRequest(data, host, port, false);
-            }
 			switch (req[1]) {
                 case "createRoom" :
                 	// create response message
