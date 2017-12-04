@@ -30,7 +30,7 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                 else if (campus.equals("DVL")) details = ServerImpl.ServerDetails.DVL;
                 else details = ServerImpl.ServerDetails.WST;
                 ServerImpl server = new ServerImpl(details);
-                server.start();
+                server.activateListener();
             }
         } catch (Exception e) {
             e.printStackTrace();

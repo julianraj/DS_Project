@@ -11,17 +11,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
-import ServerImpl.ServerDetails;
-import ServerImpl.getDataFromUDP;
-import record.Record;
-
-public class ServerImpl implements ServerInterfaceOperations {
+public class ServerImpl {
 
 	 private static final String id = null;
 	    private static String NULL = null;
 	    private int expectedSequenceNumber;
 	    ConnectionListener cl;
-	    public String bookingReply="";
+	    public String bookingReply="",cancelReply="";
 	    
     // server details
     public enum ServerDetails {
@@ -92,14 +88,7 @@ public class ServerImpl implements ServerInterfaceOperations {
             logFile = new File("log_" + currentServer.tag + ".log");
             if (!logFile.exists())
                 logFile.createNewFile();
-            pw = new PrintWriter(new BufferedWriter(new public ServerDetails[] getOtherServer() {
-        		ServerDetails[] serverDatas = ServerDetails.values();
-        		for(int i=0; i<serverDatas.length; i++)
-        			if(serverDatas[i].equals(currentServer))
-        				serverDatas[i] = null;
-        		return serverDatas;
-        	}
- FileWriter(logFile)));
+            pw = new PrintWriter(new BufferedWriter(new FileWriter(logFile)));
         } catch (IOException exc) {
             System.out.println("Error in creating log File: " + exc.toString());
         }
@@ -148,6 +137,12 @@ public class ServerImpl implements ServerInterfaceOperations {
 			this.port = n_port;
 			this.query = n_query;
 		}
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			
+		}
+    }
     private boolean contactOtherServers(String query) {
 	    //gather data from two other server
 	    CountDownLatch latch = new CountDownLatch(ServerDetails.values().length-1);
@@ -417,4 +412,21 @@ public class ServerImpl implements ServerInterfaceOperations {
             }
         }
     }
+	private String getTimeSlots(String string, String string2, String string3) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	private String cancelBooking(String string, String string2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	private String deleteRoom(String string, Integer valueOf, String string2, String[] split) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	private String createRoom(String string, Integer valueOf, String string2, String[] split) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 }

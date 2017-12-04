@@ -1,5 +1,9 @@
+
+.classpath
+.project
 .idea/*
 logs/
 *.db
 out/
 *.iml
+/bin/

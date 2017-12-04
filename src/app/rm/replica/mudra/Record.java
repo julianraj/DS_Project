@@ -26,7 +26,11 @@ public class Record implements Serializable {
 	        this.bookedBy = bookedBy;
 	    }
 
-	    public boolean patternMatcher(String s, String compile) {
+	    public Record() {
+			// TODO Auto-generated constructor stub
+		}
+
+		public boolean patternMatcher(String s, String compile) {
 	        Pattern p = Pattern.compile(compile);
 	        Matcher m = p.matcher(s);
 	        return m.matches();
@@ -44,4 +48,5 @@ public class Record implements Serializable {
 		    }finally{
 		    	readLock.unlock();
 		    }
+	    }
 }
