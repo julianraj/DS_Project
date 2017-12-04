@@ -18,6 +18,7 @@ public class ServerImpl {
 	    private int expectedSequenceNumber;
 	    ConnectionListener cl;
 	    public String bookingReply="",cancelReply="";
+	    String result = "";
 	    
     // server details
     public enum ServerDetails {
@@ -159,7 +160,7 @@ public class ServerImpl {
 		return true;
 	}
 
-    public String createRoom(String roomNo, String date, String timeSlot) {
+    public String createRoom(String adminID, String roomNo, String date, String timeSlot) {
         int flag = 1;
         synchronized (lock) {
             if (!(roomRecords.containsKey(date))) {
@@ -171,31 +172,36 @@ public class ServerImpl {
                 roomRecords.get(date).get(roomNo).put(timeSlot, null);
             } else if (!(roomRecords.get(date).get(roomNo).containsKey(timeSlot))) {
                 roomRecords.get(date).get(roomNo).put(timeSlot, null);
+                result ="success";
                 writeToLogFile("success: Time slots created for provided date and room." + id);
             } else {
+            	result="fail";
                 System.out.println("failed: Room already exists");
                 flag = 0;
             }
             if (flag == 1)
                 System.out.println("Room created");
-            return id;
+            return result;
         }
     }
 
-    public String deleteRoom(String roomNo, String date, String timeSlot) {
+    public String deleteRoom(String adminID,String roomNo, String date, String timeSlot) {
+    	
         synchronized (lock) {
             if (roomRecords.containsKey(date)) {
                 if (roomRecords.get(date).containsKey(roomNo)) {
                     if (roomRecords.get(date).get(roomNo).containsValue(timeSlot)) {
                         roomRecords.get(date).get(roomNo).remove(timeSlot, null);
+                        result="success";
                         System.out.println("Room deleted");
                         writeToLogFile("Room deleted by Admin :" + id);
                     }
                 }
             } else {
+            	result="fail";
                 System.out.println("Room does not exist");
             }
-            return id;
+            return result;
         }
     }
 
@@ -210,9 +216,11 @@ public class ServerImpl {
         	else {
             if (roomRecords.get(date).get(roomNo).containsKey(timeSlot == null)) {
                 roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
+                result="success:"+id;
                 System.out.println("Room Booked");
                 writeToLogFile("success: Room booked with bookingID of " + id);
             } else if (roomRecords.get(date).get(roomNo).containsKey(timeSlot != null)) {
+            	result="failed";
                 System.out.println("Booking Already exists");
             }
 				bookingReply="";
@@ -222,10 +230,10 @@ public class ServerImpl {
 			}
 			if(!tmp.equals("fail")){
 				Record.studentBookingCounter.put(studentID, limit+1);
-			return id;
+			return tmp;
 			}
         }
-		return tmp;
+		return result;
 		}
     
     public String getTimeSlots(String date) {
@@ -252,27 +260,29 @@ public class ServerImpl {
             }
             System.out.println("Avialable time Slots" + list);
             writeToLogFile("Student(" + id + ") - requested time slots : " + list);
-            return list;
+            return "success:"+list;
         }
     }
 
-    public boolean cancelRoom(String bookingID, String studentID) {
+    public String cancelRoom(String bookingID, String studentID) {
 		Integer tmp = Record.studentBookingCounter.get(studentID);
 		String timeSlot = null;
         String roomNo = null;
         String date = null;
 		synchronized (lock) {
 		if(tmp== null || (tmp-1) <0){
-			return false;
+			return "false";
 		}
 		String issuccess = null;
 		String campusName = bookingID.split("_")[0];
             if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
+            	result="failed";
                 System.out.println("Booking doesnot exist");
                 writeToLogFile("failed : booking from your id doesnot exist " + id);
-                return true;
+                return "failed";
             } else if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
                 roomRecords.get(date).get(roomNo).remove(timeSlot, null);
+                result="success";
                 System.out.println("Room Booking deleted");
                 writeToLogFile("success: Booking successfully cancelled for Student " + id);
                 String message = "cancel-=ID="+studentID+"-=BOOKINGID="+bookingID+"-=";
@@ -285,10 +295,10 @@ public class ServerImpl {
             }
     			else{
     				writeToLogFile("Failed to cancel the booking "+bookingID);
-    				return false;
+    				return "failed";
     			}
         }
-        return true;
+        return result;
     }
 
     public String changeBooking(String bookingID, String newCampusName, String newroomNo, String newtimeSlot) {
@@ -317,23 +327,25 @@ public class ServerImpl {
                                 response = (new String(reply.getData()).trim());
                                 if (response.equals("success")) {
                                     roomRecords.remove(e.getKey(), e.getValue());
+                                    result = "success"+id;
                                     response = "Successfully transferred Record(" + recordId + ") from " + currentServer.serverName + " to " + toServer;
                                     writeToLogFile("from server(" + currentServer.serverName + ") " + response);
                                 } else {
+                                	result="failed";
                                     response = "Failed to transfer record(" + recordId + ") from " + currentServer.serverName + " to " + toServer;
                                     writeToLogFile("from server(" + currentServer.serverName + ") " + response);
                                 }
-                                return response;
+                                return "failed";
                             } catch (Exception ex) {
                                 response = currentServer.serverName + " faced an unexpected issue - couldn't connect to transfer record(" + recordId + ") to" + toServer;
                                 writeToLogFile("from server(" + currentServer.serverName + ") - " + response);
-                                return response;
+                                return "failed";
                             }
                 }
         }
         String response = "Record ID(" + recordId + ") does not exist";
         writeToLogFile("from server(" + currentServer.serverName + ") - " + response);
-        return response;
+        return result;
     }
 
     /**
@@ -372,7 +384,7 @@ public class ServerImpl {
         }
     }
 
-    private void handleRequest(String[] data, InetAddress host, int port) throws IOException {
+    public void handleRequest(String[] data, InetAddress host, int port) throws IOException {
         int seq = Integer.valueOf(data[0]);
         processQueue.put(seq, data);
         if (expectedSequenceNumber == seq) {
@@ -380,24 +392,24 @@ public class ServerImpl {
         }
     }
 
-    private void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
+    public void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
         DatagramSocket aSocket = null;
         if (data[0].equals("ping")) {
             if (currentServer.tag.equals("KKL") || currentServer.tag.equals("DVL") || currentServer.tag.equals("WST")) {
                 if (data[1].equals("create")) {
-                    String response = createRoom(data[2], Integer.valueOf(data[3]), data[4], data[5].split(","));
+                    String response = createRoom(data[2], data[3], data[4], data[5]);
                     DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
                     aSocket.send(reply);
                 } else if (data[1].equals("delete")) {
-                    String response = deleteRoom(data[2], Integer.valueOf(data[3]), data[4], data[5].split(","));
+                    String response = deleteRoom(data[2], data[3], data[4], data[5]);
                     DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
                     aSocket.send(reply);
                 } else if (data[1].equals("cancel")) {
-                    String response = cancelBooking(data[2], data[3]);
+                    String response = cancelRoom(data[2], data[3]);
                     DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
                     aSocket.send(reply);
                 } else if (data[1].equals("availability")) {
-                    String response = getTimeSlots(data[2], data[3], data[4]);
+                    String response = getTimeSlots(data[3]);
                     DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
                     aSocket.send(reply);
                 } else if (data[1].equals("book")) {
@@ -412,21 +424,4 @@ public class ServerImpl {
             }
         }
     }
-	private String getTimeSlots(String string, String string2, String string3) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	private String cancelBooking(String string, String string2) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	private String deleteRoom(String string, Integer valueOf, String string2, String[] split) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	private String createRoom(String string, Integer valueOf, String string2, String[] split) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 }
