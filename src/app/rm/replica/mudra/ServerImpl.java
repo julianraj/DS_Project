@@ -1,28 +1,32 @@
 package app.rm.replica.mudra;
 
+import app.Util;
+
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
-import app.Util;
+
 public class ServerImpl {
 
-	 private static final String id = null;
-	    private static String NULL = null;
-	    private int expectedSequenceNumber;
-	    ConnectionListener cl;
-	    public String bookingReply="",cancelReply="";
-	    String result = "";
-	    
+    private static final String id = null;
+    private static String NULL = null;
+    private int expectedSequenceNumber = 1;
+    ConnectionListener cl;
+    public String bookingReply = "", cancelReply = "";
+    private HashMap<Integer, String[]> processQueue = new HashMap<>();
+    String result = "";
+
     // server details
     public enum ServerDetails {
-        KKL("KRIKLAND-SERVER", "KKL",Util.REPLICA_HOSTS[0], Util.KKL_PORT[0], 1), DVL("DORVAL-SERVER", "DVL",Util.REPLICA_HOSTS[0], Util.DVL_PORT[0], 1), WST("WESTMOUNT-SERVER", "WST", Util.REPLICA_HOSTS[0], Util.WST_PORT[0], 1);
+        KKL("KRIKLAND-SERVER", "KKL", Util.REPLICA_HOSTS[0], Util.KKL_PORT[0], 1), DVL("DORVAL-SERVER", "DVL", Util.REPLICA_HOSTS[0], Util.DVL_PORT[0], 1), WST("WESTMOUNT-SERVER", "WST", Util.REPLICA_HOSTS[0], Util.WST_PORT[0], 1);
 
         public String host, serverName, tag;
         public int port;
@@ -50,7 +54,7 @@ public class ServerImpl {
 
     // HashMap database
     private final HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords = new HashMap<String, HashMap<String, HashMap<String, Record>>>();
-    private HashMap<Integer, String[]> processQueue;
+
 
     // current server configuration
     public ServerDetails currentServer;
@@ -66,24 +70,26 @@ public class ServerImpl {
      *
      * @param currentServer to configure our server
      */
-    public ServerImpl(ServerDetails currentServer) {
+    public ServerImpl(ServerDetails currentServer, HashMap<Integer, String[]> processQueue) {
         super();
         this.currentServer = currentServer;
-        init();
+        this.processQueue = processQueue;
+        //init();
     }
-    
+
     public ServerDetails[] getOtherServer() {
-		ServerDetails[] serverDatas = ServerDetails.values();
-		for(int i=0; i<serverDatas.length; i++)
-			if(serverDatas[i].equals(currentServer))
-				serverDatas[i] = null;
-		return serverDatas;
-	}
+        ServerDetails[] serverDatas = ServerDetails.values();
+        for (int i = 0; i < serverDatas.length; i++)
+            if (serverDatas[i].equals(currentServer))
+                serverDatas[i] = null;
+        return serverDatas;
+    }
+
     /**
      * initializes server object with default values also creates log files for
      * the server initializes File Reader and Writer
      */
-    private void init() {
+    public void init() {
         try {
             // create log file
             logFile = new File("log_" + currentServer.tag + ".log");
@@ -116,49 +122,53 @@ public class ServerImpl {
      */
     public void activateListener() {
         Thread t = new Thread(new ConnectionListener(this));
-        t.start(); 
+        t.start();
     }
-    public void stop() {
-    	cl = new ConnectionListener(this);
-    	cl.stop();
-    }
-    
-    public void restart() {
-    	stop();
-    	activateListener();
-    }
-    
-    class getDataFromUDP implements Runnable{
 
-		CountDownLatch signal = null;
-		String query = null;
-		int port = 0;
-		public getDataFromUDP(CountDownLatch latch,int n_port,String n_query){
-			this.signal = latch;
-			this.port = n_port;
-			this.query = n_query;
-		}
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-			
-		}
+    public void stop() {
+        cl = new ConnectionListener(this);
+        cl.stop();
     }
+
+    public void restart() {
+        stop();
+        activateListener();
+    }
+
+    class getDataFromUDP implements Runnable {
+
+        CountDownLatch signal = null;
+        String query = null;
+        int port = 0;
+
+        public getDataFromUDP(CountDownLatch latch, int n_port, String n_query) {
+            this.signal = latch;
+            this.port = n_port;
+            this.query = n_query;
+        }
+
+        @Override
+        public void run() {
+            // TODO Auto-generated method stub
+
+        }
+    }
+
     private boolean contactOtherServers(String query) {
-	    //gather data from two other server
-	    CountDownLatch latch = new CountDownLatch(ServerDetails.values().length-1);
-	    for(ServerDetails s : getOtherServer())
-			if(s!=null)
-				new Thread((Runnable) new getDataFromUDP(latch,s.port,query)).start();
-		try {
-			//wait until got response from all other servers 
-			latch.await();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return true;
-	}
+        //gather data from two other server
+        CountDownLatch latch = new CountDownLatch(ServerDetails.values().length - 1);
+        for (ServerDetails s : getOtherServer())
+            if (s != null)
+                new Thread((Runnable) new getDataFromUDP(latch, s.port, query)).start();
+        try {
+            //wait until got response from all other servers
+            latch.await();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return true;
+    }
 
     public String createRoom(String adminID, String roomNo, String date, String timeSlot) {
         int flag = 1;
@@ -167,15 +177,17 @@ public class ServerImpl {
                 roomRecords.put(date, new HashMap<String, HashMap<String, Record>>());
                 roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
                 roomRecords.get(date).get(roomNo).put(timeSlot, null);
+                result = "success";
             } else if (!(roomRecords.get(date).containsKey(roomNo))) {
                 roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
                 roomRecords.get(date).get(roomNo).put(timeSlot, null);
+                result = "success";
             } else if (!(roomRecords.get(date).get(roomNo).containsKey(timeSlot))) {
                 roomRecords.get(date).get(roomNo).put(timeSlot, null);
-                result ="success";
+                result = "success";
                 writeToLogFile("success: Time slots created for provided date and room." + id);
             } else {
-            	result="fail";
+                result = "failed";
                 System.out.println("failed: Room already exists");
                 flag = 0;
             }
@@ -185,57 +197,56 @@ public class ServerImpl {
         }
     }
 
-    public String deleteRoom(String adminID,String roomNo, String date, String timeSlot) {
-    	
+    public String deleteRoom(String adminID, String roomNo, String date, String timeSlot) {
+
         synchronized (lock) {
             if (roomRecords.containsKey(date)) {
                 if (roomRecords.get(date).containsKey(roomNo)) {
                     if (roomRecords.get(date).get(roomNo).containsValue(timeSlot)) {
                         roomRecords.get(date).get(roomNo).remove(timeSlot, null);
-                        result="success";
+                        result = "success";
                         System.out.println("Room deleted");
                         writeToLogFile("Room deleted by Admin :" + id);
                     }
                 }
             } else {
-            	result="fail";
+                result = "fail";
                 System.out.println("Room does not exist");
             }
             return result;
         }
     }
 
-    public String bookRoom( String studentID,String campusName, String roomNo, String date, String timeSlot) {
+    public String bookRoom(String studentID, String campusName, String roomNo, String date, String timeSlot) {
         String id = currentServer.tag.charAt(0) + "B" + idNo;
         String tmp = null;
         int limit = Record.checkLimit(studentID);
         synchronized (lock) {
-        	if(limit >= 3) {
-    			return "OverBooked";
-    		}
-        	else {
-            if (roomRecords.get(date).get(roomNo).containsKey(timeSlot == null)) {
-                roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
-                result="success:"+id;
-                System.out.println("Room Booked");
-                writeToLogFile("success: Room booked with bookingID of " + id);
-            } else if (roomRecords.get(date).get(roomNo).containsKey(timeSlot != null)) {
-            	result="failed";
-                System.out.println("Booking Already exists");
+            if (limit >= 3) {
+                return "OverBooked";
+            } else {
+                if (roomRecords.get(date).get(roomNo).containsKey(timeSlot == null)) {
+                    roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
+                    result = "success:" + id;
+                    System.out.println("Room Booked");
+                    writeToLogFile("success: Room booked with bookingID of " + id);
+                } else if (roomRecords.get(date).get(roomNo).containsKey(timeSlot != null)) {
+                    result = "failed";
+                    System.out.println("Booking Already exists");
+                }
+                bookingReply = "";
+                String message = "book-=ID=" + studentID + "-=ROOMNUMBER=" + roomNo + "-=DATE=" + date + "-=SLOT=" + timeSlot + "-=";
+                contactOtherServers(message);
+                tmp = bookingReply;
             }
-				bookingReply="";
-				String message = "book-=ID="+studentID+"-=ROOMNUMBER="+roomNo+"-=DATE="+date+"-=SLOT="+timeSlot+"-=";
-				contactOtherServers(message);			
-			    tmp = bookingReply;
-			}
-			if(!tmp.equals("fail")){
-				Record.studentBookingCounter.put(studentID, limit+1);
-			return tmp;
-			}
+            if (!tmp.equals("fail")) {
+                Record.studentBookingCounter.put(studentID, limit + 1);
+                return tmp;
+            }
         }
-		return result;
-		}
-    
+        return result;
+    }
+
     public String getTimeSlots(String date) {
         Stream<Object> slotList;
         slotList = roomRecords.entrySet().stream().map((e) -> e.getValue());
@@ -260,43 +271,42 @@ public class ServerImpl {
             }
             System.out.println("Avialable time Slots" + list);
             writeToLogFile("Student(" + id + ") - requested time slots : " + list);
-            return "success:"+list;
+            return "success:" + list;
         }
     }
 
     public String cancelRoom(String bookingID, String studentID) {
-		Integer tmp = Record.studentBookingCounter.get(studentID);
-		String timeSlot = null;
+        Integer tmp = Record.studentBookingCounter.get(studentID);
+        String timeSlot = null;
         String roomNo = null;
         String date = null;
-		synchronized (lock) {
-		if(tmp== null || (tmp-1) <0){
-			return "false";
-		}
-		String issuccess = null;
-		String campusName = bookingID.split("_")[0];
-           if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
+        synchronized (lock) {
+            if (tmp == null || (tmp - 1) < 0) {
+                return "false";
+            }
+            String issuccess = null;
+            String campusName = bookingID.split("_")[0];
+            if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
                 roomRecords.get(date).get(roomNo).remove(timeSlot, null);
-                result="success";
+                result = "success";
                 System.out.println("Room Booking deleted");
                 writeToLogFile("success: Booking successfully cancelled for Student " + id);
-                String message = "cancel-=ID="+studentID+"-=BOOKINGID="+bookingID+"-=";
-        		contactOtherServers(message);
-    			issuccess = cancelReply;
+                String message = "cancel-=ID=" + studentID + "-=BOOKINGID=" + bookingID + "-=";
+                contactOtherServers(message);
+                issuccess = cancelReply;
             }
-            if(issuccess.equals("done")){
-    			Record.studentBookingCounter.put(studentID,tmp-1);			
-    			writeToLogFile("Canceled the booking "+bookingID);
+            if (issuccess.equals("done")) {
+                Record.studentBookingCounter.put(studentID, tmp - 1);
+                writeToLogFile("Canceled the booking " + bookingID);
+            } else {
+                writeToLogFile("Failed to cancel the booking " + bookingID);
+                return "failed";
             }
-    			else{
-    				writeToLogFile("Failed to cancel the booking "+bookingID);
-    				return "failed";
-    			}
         }
         return result;
     }
 
-    public String changeBooking(String studentID, String bookingID, String newCampusName, String newroomNo,String date, String newtimeSlot) {
+    public String changeBooking(String studentID, String bookingID, String newCampusName, String newroomNo, String date, String newtimeSlot) {
         Object recordId = null;
         String managerId = null;
         synchronized (lock) {
@@ -322,11 +332,11 @@ public class ServerImpl {
                                 response = (new String(reply.getData()).trim());
                                 if (response.equals("success")) {
                                     roomRecords.remove(e.getKey(), e.getValue());
-                                    result = "success"+id;
+                                    result = "success" + id;
                                     response = "Successfully transferred Record(" + recordId + ") from " + currentServer.serverName + " to " + toServer;
                                     writeToLogFile("from server(" + currentServer.serverName + ") " + response);
                                 } else {
-                                	result="failed";
+                                    result = "failed";
                                     response = "Failed to transfer record(" + recordId + ") from " + currentServer.serverName + " to " + toServer;
                                     writeToLogFile("from server(" + currentServer.serverName + ") " + response);
                                 }
@@ -380,49 +390,57 @@ public class ServerImpl {
     }
 
     public void handleRequest(String[] data, InetAddress host, int port) throws IOException {
+        System.out.println("processRequest"+ Arrays.deepToString(data));
         int seq = Integer.valueOf(data[0]);
-        processQueue.put(seq, data);
+        processQueue.put(seq, Arrays.copyOfRange(data,2,data.length));
         if (expectedSequenceNumber == seq) {
             processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
         }
     }
 
     public void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
-        DatagramSocket aSocket = null;
-        if (data[0].equals("ping")) {
-            if (currentServer.tag.equals("KKL") || currentServer.tag.equals("DVL") || currentServer.tag.equals("WST")) {
-                if (data[1].equals("create")) {
-                    String response = createRoom(data[2], data[3], data[4], data[5]);
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
-                    aSocket.send(reply);
-                } else if (data[1].equals("delete")) {
-                    String response = deleteRoom(data[2], data[3], data[4], data[5]);
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
-                    aSocket.send(reply);
-                } else if (data[1].equals("cancel")) {
-                    String response = cancelRoom(data[2], data[3]);
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
-                    aSocket.send(reply);
-                } else if (data[1].equals("availability")) {
-                    String response = getTimeSlots(data[3]);
-                    DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
-                    aSocket.send(reply);
-                } else if (data[1].equals("book")) {
-                	String response = bookRoom(data[2],data[3],data[4],data[5],data[6]);
-                	DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
-                    aSocket.send(reply);
-                } else if (data[1].equals("change booking")) {
-                	String response = changeBooking(data[2],data[3],data[4],data[5],data[6],data[7]);
-                	DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
-                    aSocket.send(reply);
-                }
+        DatagramSocket aSocket = new DatagramSocket();
+        System.out.println("processRequest"+ Arrays.deepToString(data));
+//        if (data[0].equals("ping")) {
+//        if (currentServer.tag.equals("KKL") || currentServer.tag.equals("DVL") || currentServer.tag.equals("WST")) {
+        if (data[0].equals("create")) {
+            String response = createRoom(data[1], data[2], data[3], data[4]);
+            response = "0-="+response;
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            aSocket.send(reply);
+        } else if (data[0].equals("delete")) {
+            String response = deleteRoom(data[2], data[3], data[4], data[5]);
+            response = "0-="+response;
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            aSocket.send(reply);
+        } else if (data[0].equals("cancel")) {
+            String response = cancelRoom(data[2], data[3]);
+            response = "0-="+response;
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            aSocket.send(reply);
+        } else if (data[0].equals("availability")) {
+            String response = getTimeSlots(data[3]);
+            response = "0-="+response;
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            aSocket.send(reply);
+        } else if (data[0].equals("book")) {
+            String response = bookRoom(data[2], data[3], data[4], data[5], data[6]);
+            response = "0-="+response;
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            aSocket.send(reply);
+        } else if (data[0].equals("change")) {
+            String response = changeBooking(data[2], data[3], data[4], data[5], data[6], data[7]);
+            response = "0-="+response;
+            DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+            aSocket.send(reply);
+        }
 
-                if (fromQueue) {
-                    expectedSequenceNumber++;
-                    if (processQueue.keySet().contains(expectedSequenceNumber))
-                        processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
-                }
-            }
+        if (fromQueue) {
+            expectedSequenceNumber++;
+            if (processQueue.keySet().contains(expectedSequenceNumber))
+                processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
         }
     }
+//    }
+//    }
 }

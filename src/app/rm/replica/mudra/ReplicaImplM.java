@@ -9,6 +9,7 @@ import java.util.HashMap;
 public class ReplicaImplM extends Replica<ServerImpl> {
 
     private static HashMap<String, HashMap<String, HashMap<String, HashMap<String, Record>>>> mData = new HashMap<>();
+    private HashMap<Integer, String[]> processQueue = new HashMap<>();
     private static int expectedSequenceNumber = 1;
 
     public ReplicaImplM(int replicaIndex, boolean hasError) {
@@ -29,8 +30,8 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                 if (campus.equals("KKL")) details = ServerImpl.ServerDetails.KKL;
                 else if (campus.equals("DVL")) details = ServerImpl.ServerDetails.DVL;
                 else details = ServerImpl.ServerDetails.WST;
-                ServerImpl server = new ServerImpl(details);
-                server.activateListener();
+                ServerImpl server = new ServerImpl(details, processQueue);
+                server.init();
             }
         } catch (Exception e) {
             e.printStackTrace();

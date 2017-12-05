@@ -87,68 +87,68 @@ class RequestExecutor extends Thread {
             } else {
                 server.processRequest(req, host, port, false);
             }
-			switch (req[1]) {
-                case "createRoom" :
-                	// create response message
-                    response = server.getSize(req[0]);
-                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
-                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
-                	break;
-                	
-                case "deleteRoom" :
-                	// create response message
-                    response = server.getSize(req[0]);
-                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
-                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
-                	break;
-                	
-                case "bookRoom" :
-                	// create response message
-                    response = server.getSize(req[0]);
-                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
-                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
-                	break;
-                	
-                case "getTimeSlots":
-                    // create response message
-                    response = server.getSize(req[0]);
-                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
-                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
-                    break;
-                    
-                case "cancelRoom":
-                	// create response message
-                    response = server.getSize(req[0]);
-                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
-                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
-                    break;
-                    
-                case "changeBooking":
-                    String[] record = req[2].split("-=");
-				String str = null;
-				// transfer records
-				String newtimeSlot = null;
-				String newroomNo = null;
-				String date =null;
-				String status = server.changeBooking(req[0], record[0].substring(0,3), newroomNo, date, newtimeSlot, str);
-                    // check status after transferring record
-                    if (status.equals(true))
-                        response = "success";
-                    else
-                        response = "failed";
-                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
-                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
-                    break;
-
-                default:
-                    // wrong request sent by another server
-                    System.out.println("\t...Wrong Request : " + data);
-                    server.writeToLogFile("Wrong request by " + data);
-                    response = "Invalid Request";
-                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
-                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
-                    break;
-            }
+//			switch (req[1]) {
+//                case "create" :
+//                	// create response message
+//                    response = server.getSize(req[0]);
+//                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
+//                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
+//                	break;
+//
+//                case "delete" :
+//                	// create response message
+//                    response = server.getSize(req[0]);
+//                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
+//                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
+//                	break;
+//
+//                case "book" :
+//                	// create response message
+//                    response = server.getSize(req[0]);
+//                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
+//                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
+//                	break;
+//
+//                case "getTimeSlots":
+//                    // create response message
+//                    response = server.getSize(req[0]);
+//                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
+//                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
+//                    break;
+//
+//                case "cancelRoom":
+//                	// create response message
+//                    response = server.getSize(req[0]);
+//                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
+//                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
+//                    break;
+//
+//                case "changeBooking":
+//                    String[] record = req[2].split("-=");
+//				String str = null;
+//				// transfer records
+//				String newtimeSlot = null;
+//				String newroomNo = null;
+//				String date =null;
+//				String status = server.changeBooking(req[0], record[0].substring(0,3), newroomNo, date, newtimeSlot, str);
+//                    // check status after transferring record
+//                    if (status.equals(true))
+//                        response = "success";
+//                    else
+//                        response = "failed";
+//                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
+//                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
+//                    break;
+//
+//                default:
+//                    // wrong request sent by another server
+//                    System.out.println("\t...Wrong Request : " + data);
+//                    server.writeToLogFile("Wrong request by " + data);
+//                    response = "Invalid Request";
+//                    reply = new DatagramPacket(response.getBytes(), response.length(), request.getAddress(), request.getPort()); // encapsulate response in a DatagraPacket object
+//                    aSocket.send(reply); // send the response DatagramPacket object to the requester again
+//                    break;
+//            }
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());
             server.writeToLogFile("Socket: " + e.getMessage());
