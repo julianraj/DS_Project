@@ -3,6 +3,7 @@ package app.rm;
 import app.Util;
 import app.rm.replica.Replica;
 import app.rm.replica.julian.ReplicaImplJ;
+import app.rm.replica.mudra.ReplicaImplM;
 import app.rm.replica.rashmi.ReplicaImplR;
 
 import java.io.IOException;
@@ -47,8 +48,8 @@ public class ReplicaManager {
                 replica.start();
                 break;
             case 0:
-                replica = new ReplicaImplR(replicaNum, hasError);
-                replicaBackup = new ReplicaImplR(replicaNum, false);
+                replica = new ReplicaImplM(replicaNum, hasError);
+                replicaBackup = new ReplicaImplM(replicaNum, false);
                 replica.start();
                 break;
             default:
