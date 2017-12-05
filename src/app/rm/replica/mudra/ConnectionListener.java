@@ -1,12 +1,13 @@
 package app.rm.replica.mudra;
 
 import java.io.*;
+
 import java.net.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import app.Util;
-
+import app.rm.replica.mudra.ServerImpl;
 public class ConnectionListener implements Runnable {
     public ServerImpl server;
     DatagramSocket aSocket;
@@ -63,7 +64,7 @@ class RequestExecutor extends Thread {
     public void run() {
         try {
             String data = new String(request.getData()).trim();  // convert bytes into String and trim the string
-
+            byte[] requestData= request.getData();
             // data must be in the form of [XXXXX : XXXXX : ....]
             // check for data
             String[] req = data.split("-=");
@@ -72,10 +73,19 @@ class RequestExecutor extends Thread {
             InetAddress host = InetAddress.getByName(Util.FRONT_END_HOST);
             int port = Util.FRONT_END_PORT;
             boolean isRedirect = false;
+            try {
+                int seq = Integer.valueOf(req[0]);
+                port = Integer.valueOf(req[1]);
+            } catch (NumberFormatException e) {
+                isRedirect = true;
+                port = request.getPort();
+                host = request.getAddress();
+            }
+
             if (!isRedirect) {
-            server.handleRequest(req, host, port);
+                server.handleRequest(req, host, port);
             } else {
-            server.processRequest(req, host, port, false);
+                server.processRequest(req, host, port, false);
             }
 			switch (req[1]) {
                 case "createRoom" :
@@ -115,11 +125,12 @@ class RequestExecutor extends Thread {
                     
                 case "changeBooking":
                     String[] record = req[2].split("-=");
-				String str;
+				String str = null;
 				// transfer records
 				String newtimeSlot = null;
 				String newroomNo = null;
-				String status = server.changeBooking(req[0], record[0].substring(0,3), newroomNo, newtimeSlot);
+				String date =null;
+				String status = server.changeBooking(req[0], record[0].substring(0,3), newroomNo, date, newtimeSlot, str);
                     // check status after transferring record
                     if (status.equals(true))
                         response = "success";

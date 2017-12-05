@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
-
+import app.Util;
 public class ServerImpl {
 
 	 private static final String id = null;
@@ -22,7 +22,7 @@ public class ServerImpl {
 	    
     // server details
     public enum ServerDetails {
-        KKL("KRIKLAND-SERVER", "KKL", "127.0.0.1", 1092, 0001), DVL("DORVAL-SERVER", "DVL", "127.0.0.1", 1091, 0001), WST("WESTMOUNT-SERVER", "WST", "127.0.0.1", 1093, 0001);
+        KKL("KRIKLAND-SERVER", "KKL",Util.REPLICA_HOSTS[0], Util.KKL_PORT[0], 1), DVL("DORVAL-SERVER", "DVL",Util.REPLICA_HOSTS[0], Util.DVL_PORT[0], 1), WST("WESTMOUNT-SERVER", "WST", Util.REPLICA_HOSTS[0], Util.WST_PORT[0], 1);
 
         public String host, serverName, tag;
         public int port;
@@ -205,7 +205,7 @@ public class ServerImpl {
         }
     }
 
-    public String bookRoom(String campusName, String roomNo, String date, String timeSlot, String studentID, String bookingID) {
+    public String bookRoom( String studentID,String campusName, String roomNo, String date, String timeSlot) {
         String id = currentServer.tag.charAt(0) + "B" + idNo;
         String tmp = null;
         int limit = Record.checkLimit(studentID);
@@ -275,12 +275,7 @@ public class ServerImpl {
 		}
 		String issuccess = null;
 		String campusName = bookingID.split("_")[0];
-            if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
-            	result="failed";
-                System.out.println("Booking doesnot exist");
-                writeToLogFile("failed : booking from your id doesnot exist " + id);
-                return "failed";
-            } else if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
+           if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
                 roomRecords.get(date).get(roomNo).remove(timeSlot, null);
                 result="success";
                 System.out.println("Room Booking deleted");
@@ -301,7 +296,7 @@ public class ServerImpl {
         return result;
     }
 
-    public String changeBooking(String bookingID, String newCampusName, String newroomNo, String newtimeSlot) {
+    public String changeBooking(String studentID, String bookingID, String newCampusName, String newroomNo,String date, String newtimeSlot) {
         Object recordId = null;
         String managerId = null;
         synchronized (lock) {
@@ -335,7 +330,7 @@ public class ServerImpl {
                                     response = "Failed to transfer record(" + recordId + ") from " + currentServer.serverName + " to " + toServer;
                                     writeToLogFile("from server(" + currentServer.serverName + ") " + response);
                                 }
-                                return "failed";
+                                return result;
                             } catch (Exception ex) {
                                 response = currentServer.serverName + " faced an unexpected issue - couldn't connect to transfer record(" + recordId + ") to" + toServer;
                                 writeToLogFile("from server(" + currentServer.serverName + ") - " + response);
@@ -413,7 +408,13 @@ public class ServerImpl {
                     DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
                     aSocket.send(reply);
                 } else if (data[1].equals("book")) {
+                	String response = bookRoom(data[2],data[3],data[4],data[5],data[6]);
+                	DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+                    aSocket.send(reply);
                 } else if (data[1].equals("change booking")) {
+                	String response = changeBooking(data[2],data[3],data[4],data[5],data[6],data[7]);
+                	DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
+                    aSocket.send(reply);
                 }
 
                 if (fromQueue) {
