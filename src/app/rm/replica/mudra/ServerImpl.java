@@ -19,7 +19,7 @@ public class ServerImpl {
 
     private static final String id = null;
     private static String NULL = null;
-    private AtomicInteger expectedSequenceNumber = new AtomicInteger(1);
+    private AtomicInteger expectedSequenceNumber;
     ConnectionListener cl;
     public String bookingReply = "", cancelReply = "";
     private HashMap<Integer, String[]> processQueue = new HashMap<>();
@@ -71,10 +71,11 @@ public class ServerImpl {
      *
      * @param currentServer to configure our server
      */
-    public ServerImpl(ServerDetails currentServer, HashMap<Integer, String[]> processQueue) {
+    public ServerImpl(ServerDetails currentServer, HashMap<Integer, String[]> processQueue, AtomicInteger expectedSequenceNumber) {
         super();
         this.currentServer = currentServer;
         this.processQueue = processQueue;
+        this.expectedSequenceNumber = expectedSequenceNumber;
         //init();
     }
 
@@ -204,7 +205,7 @@ public class ServerImpl {
             if (roomRecords.containsKey(date)) {
                 if (roomRecords.get(date).containsKey(roomNo)) {
                     if (roomRecords.get(date).get(roomNo).containsValue(timeSlot)) {
-                        roomRecords.get(date).get(roomNo).remove(timeSlot, null);
+                        roomRecords.get(date).get(roomNo).remove(timeSlot);
                         result = "success";
                         System.out.println("Room deleted");
                         writeToLogFile("Room deleted by Admin :" + id);
@@ -395,7 +396,7 @@ public class ServerImpl {
         int seq = Integer.valueOf(data[0]);
         processQueue.put(seq, Arrays.copyOfRange(data,2,data.length));
         if (expectedSequenceNumber.get() == seq) {
-            processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
+            processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
         }
     }
 
