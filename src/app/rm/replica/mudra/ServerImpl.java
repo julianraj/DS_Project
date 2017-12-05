@@ -12,13 +12,14 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class ServerImpl {
 
     private static final String id = null;
     private static String NULL = null;
-    private int expectedSequenceNumber = 1;
+    private AtomicInteger expectedSequenceNumber = new AtomicInteger(1);
     ConnectionListener cl;
     public String bookingReply = "", cancelReply = "";
     private HashMap<Integer, String[]> processQueue = new HashMap<>();
@@ -26,13 +27,13 @@ public class ServerImpl {
 
     // server details
     public enum ServerDetails {
-        KKL("KRIKLAND-SERVER", "KKL", Util.REPLICA_HOSTS[0], Util.KKL_PORT[0], 1), DVL("DORVAL-SERVER", "DVL", Util.REPLICA_HOSTS[0], Util.DVL_PORT[0], 1), WST("WESTMOUNT-SERVER", "WST", Util.REPLICA_HOSTS[0], Util.WST_PORT[0], 1);
+        KKL("KRIKLAND-SERVER", "KKL", Util.REPLICA_HOSTS[0], Util.KKL_PORT[0], new AtomicInteger(1)), DVL("DORVAL-SERVER", "DVL", Util.REPLICA_HOSTS[0], Util.DVL_PORT[0], new AtomicInteger(1)), WST("WESTMOUNT-SERVER", "WST", Util.REPLICA_HOSTS[0], Util.WST_PORT[0], new AtomicInteger(1));
 
         public String host, serverName, tag;
         public int port;
-        private int expectedSequenceNumber;
+        private AtomicInteger expectedSequenceNumber;
 
-        private ServerDetails(String serverName, String tag, String host, int port, int expectedSequenceNumber) {
+        private ServerDetails(String serverName, String tag, String host, int port, AtomicInteger expectedSequenceNumber) {
             this.serverName = serverName;
             this.tag = tag;
             this.host = host;
@@ -393,7 +394,7 @@ public class ServerImpl {
         System.out.println("processRequest"+ Arrays.deepToString(data));
         int seq = Integer.valueOf(data[0]);
         processQueue.put(seq, Arrays.copyOfRange(data,2,data.length));
-        if (expectedSequenceNumber == seq) {
+        if (expectedSequenceNumber.get() == seq) {
             processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
         }
     }
@@ -436,7 +437,7 @@ public class ServerImpl {
         }
 
         if (fromQueue) {
-            expectedSequenceNumber++;
+            expectedSequenceNumber.incrementAndGet();
             if (processQueue.keySet().contains(expectedSequenceNumber))
                 processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
         }
