@@ -77,7 +77,7 @@ public class StudentClient {
                 {
                     System.out.println("Enter a booking id");
                     String booking_id = scanner.next();
-                    String message = frontend.cancelBooking(booking_id, student_id);
+                    String message = frontend.cancelBooking(student_id, booking_id);
                     String parameters = "Student Id: " + student_id + " Booking ID: " + booking_id;
                     Helper.writelog("Client","student", student_id, "Cancel Room", parameters, true, "Room Booking Cancelled");//todo
                     System.out.println(message);

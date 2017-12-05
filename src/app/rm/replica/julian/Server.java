@@ -242,7 +242,7 @@ public class Server implements ServerOperations {
     @Override
     public String cancelBooking(String studentID, String bookingID) {
         String campusName = bookingID.substring(0, 3);
-        String response = "failed: ";
+        String response = "failed";
         if (!campusName.equals(mCampusName)) {
             String logMessage = "Date: " + new Date().toString();
             logMessage += "\nRequest Type: Cancel booking";

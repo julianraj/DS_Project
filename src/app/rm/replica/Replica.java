@@ -35,7 +35,7 @@ public abstract class Replica<S> {
             public void run() {
                 try {
                     mSocket = new DatagramSocket(null);
-                    mSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]), Util.REPLICA_PORT[replicaIndex]));
+                    mSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]), Util.REPLICA_PORT[replicaIndex]));
                     while (true) {
                         try {
                             byte[] buffer = new byte[2048];
@@ -116,7 +116,7 @@ public abstract class Replica<S> {
         System.out.println("ping " + campus + " server...");
         try {
             DatagramSocket socket = new DatagramSocket();
-            final InetAddress host = InetAddress.getByName(Util.REPLICA_MANAGER_HOSTS[replicaIndex]);
+            final InetAddress host = InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]);
             DatagramPacket request = new DatagramPacket("ping".getBytes(), 4, host, Util.getCampusPort(campus, replicaIndex));
             socket.send(request);
 
