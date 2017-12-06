@@ -423,9 +423,6 @@ public class ServerImpl {
 	public void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
 		DatagramSocket aSocket = new DatagramSocket();
 		System.out.println("processRequest" + Arrays.deepToString(data));
-		// if (data[0].equals("ping")) {
-		// if (currentServer.tag.equals("KKL") || currentServer.tag.equals("DVL") ||
-		// currentServer.tag.equals("WST")) {
 		if (data[0].equals("create")) {
 			String response = createRoom(data[1], data[2], data[3], data[4]);
 			response = "0-=" + response;
@@ -468,6 +465,4 @@ public class ServerImpl {
 				processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
 		}
 	}
-	// }
-	// }
 }
