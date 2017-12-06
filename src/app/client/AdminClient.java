@@ -1,7 +1,7 @@
 package app.client;
 
 import app.Helper;
-import app.admin.Admin;
+import app.server.Server;
 import app.server.ServerHelper;
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.Object;
@@ -11,7 +11,7 @@ import org.omg.CosNaming.NamingContextExtHelper;
 import java.util.Scanner;
 
 public class AdminClient {
-    static Admin frontend;
+    static Server frontend;
 
     public static void main(String args[])
     {

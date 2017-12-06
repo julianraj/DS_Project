@@ -3,7 +3,6 @@ package app.client;
 import app.Helper;
 import app.server.Server;
 import app.server.ServerHelper;
-import app.student.Student;
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.Object;
 import org.omg.CosNaming.NamingContextExt;
@@ -12,7 +11,7 @@ import org.omg.CosNaming.NamingContextExtHelper;
 import java.util.Scanner;
 
 public class StudentClient {
-    static Student frontend;
+    static Server frontend;
     public static void main(String args[])
     {
         try
