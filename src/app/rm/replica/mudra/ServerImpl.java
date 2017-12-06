@@ -7,6 +7,8 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -239,6 +241,8 @@ public class ServerImpl {
 				roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
 				result = "success";
 				System.out.println("Room Booked");
+				//System.out.println(roomRecords.get(date).get(roomNo).get(timeSlot).id);
+				//System.out.println(roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy);
 				writeToLogFile("success: Room booked with bookingID of " + id);
 			} else if (roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy != null) {
 				result = "failed";
@@ -271,7 +275,7 @@ public class ServerImpl {
 					DatagramSocket aSocket = new DatagramSocket();
 					InetAddress aHost = InetAddress.getByName(s.host);
 
-					String req = /* currentServer.serverName + "-=" + */ "availability" + "-=" + date;
+					String req = "availability" + "-=" + date;
 					DatagramPacket request = new DatagramPacket(req.getBytes(), req.length(), aHost, s.port);
 					aSocket.send(request);
 
@@ -289,88 +293,55 @@ public class ServerImpl {
 		}
 	}
 
-	public String cancelRoom(String bookingID, String studentID) {
+	public String cancelRoom(String studentID, String bookingID) {
 		Integer tmp = Record.studentBookingCounter.get(studentID);
-		String timeSlot = null;
-		String roomNo = null;
-		String date = null;
+		String campusName = bookingID.substring(0, 3);
+		String issuccess = null;
 		synchronized (lock) {
-			if (tmp == null || (tmp - 1) < 0) {
-				return "false";
+			for (Entry<String, HashMap<String, HashMap<String, Record>>> entry1 : roomRecords.entrySet()) {
+				String date = entry1.getKey();
+				for (Entry<String, HashMap<String, Record>> entry2 : entry1.getValue().entrySet()) {
+					String roomNo = entry2.getKey();
+					for (Entry<String, Record> entry3 : entry2.getValue().entrySet()) {
+						String timeSlot = entry3.getKey();
+						if (entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy.matches(studentID)) {
+							roomRecords.get(date).get(roomNo).put(timeSlot, null);
+							System.out.println("Room cancelled.");
+							result = "success";
+						} else {
+							System.out.println("No booking exists. Cancel failed");
+							result = "failed";
+						}
+					}
+				}
 			}
-			String issuccess = null;
-			String campusName = bookingID.split("_")[0];
-			if (roomRecords.get(date).get(roomNo).containsKey(timeSlot)) {
-				roomRecords.get(date).get(roomNo).put(timeSlot, new Record());
-				result = "success";
-				System.out.println("Room Booking deleted");
-				writeToLogFile("success: Booking successfully cancelled for Student " + id);
-				String message = "cancel-=ID=" + studentID + "-=BOOKINGID=" + bookingID + "-=";
-				contactOtherServers(message);
-				issuccess = cancelReply;
-			}
-			if (issuccess.equals("done")) {
-				Record.studentBookingCounter.put(studentID, tmp - 1);
-				writeToLogFile("Canceled the booking " + bookingID);
-			} else {
-				writeToLogFile("Failed to cancel the booking " + bookingID);
-				return "failed";
-			}
+			return result;
 		}
-		return result;
 	}
 
 	public String changeBooking(String studentID, String bookingID, String newCampusName, String newroomNo, String date,
 			String newtimeSlot) {
-		Object recordId = null;
-		String managerId = null;
-		synchronized (lock) {
-			Record r = null;
-			for (Entry<String, HashMap<String, HashMap<String, Record>>> e : roomRecords.entrySet())
-				if (r.id.equals(recordId)) {
-					String response;
-					Object toServer = null;
-					for (ServerDetails s : concurrentServerList)
-						if (s.serverName.equals(toServer) || s.tag.equals(toServer))
-							try {
-								DatagramSocket aSocket = new DatagramSocket();
-								InetAddress aHost = InetAddress.getByName(s.host);
-
-								String req = currentServer.serverName + ":" + "transfer" + ":"
-										+ e.getValue().toString();
-								DatagramPacket request = new DatagramPacket(req.getBytes(), req.length(), aHost,
-										s.port);
-								aSocket.send(request);
-
-								byte[] buffer = new byte[1000];
-								DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-								aSocket.receive(reply);
-
-								response = (new String(reply.getData()).trim());
-								if (response.equals("success")) {
-									roomRecords.remove(e.getKey(), e.getValue());
-									result = "success" + id;
-									response = "Successfully transferred Record(" + recordId + ") from "
-											+ currentServer.serverName + " to " + toServer;
-									writeToLogFile("from server(" + currentServer.serverName + ") " + response);
-								} else {
-									result = "failed";
-									response = "Failed to transfer record(" + recordId + ") from "
-											+ currentServer.serverName + " to " + toServer;
-									writeToLogFile("from server(" + currentServer.serverName + ") " + response);
-								}
-								return result;
-							} catch (Exception ex) {
-								response = currentServer.serverName
-										+ " faced an unexpected issue - couldn't connect to transfer record(" + recordId
-										+ ") to" + toServer;
-								writeToLogFile("from server(" + currentServer.serverName + ") - " + response);
-								return "failed";
-							}
+		for (Entry<String, HashMap<String, HashMap<String, Record>>> entry1 : roomRecords.entrySet()) {
+			String date1 = entry1.getKey();
+			for (Entry<String, HashMap<String, Record>> entry2 : entry1.getValue().entrySet()) {
+				String roomNo = entry2.getKey();
+				for (Entry<String, Record> entry3 : entry2.getValue().entrySet()) {
+					String timeSlot = entry3.getKey();
+					if (entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy.matches(studentID)) {
+						roomRecords.get(date1).get(roomNo).put(timeSlot, null);
+						System.out.println("Room cancelled");
+						bookRoom(studentID, newCampusName, newroomNo, date, newtimeSlot);
+						System.out.println("Changed Booking Successful");
+						result = "success";
+						break;
+					}
+					else {
+						System.out.println("No booking exists. Cancel failed");
+						result = "failed";
+					}
 				}
+			}
 		}
-		String response = "Record ID(" + recordId + ") does not exist";
-		writeToLogFile("from server(" + currentServer.serverName + ") - " + response);
 		return result;
 	}
 
