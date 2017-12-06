@@ -178,14 +178,14 @@ public class ServerImpl {
             if (!(roomRecords.containsKey(date))) {
                 roomRecords.put(date, new HashMap<String, HashMap<String, Record>>());
                 roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
-                roomRecords.get(date).get(roomNo).put(timeSlot, null);
+                roomRecords.get(date).get(roomNo).put(timeSlot, new Record());
                 result = "success";
             } else if (!(roomRecords.get(date).containsKey(roomNo))) {
                 roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
-                roomRecords.get(date).get(roomNo).put(timeSlot, null);
+                roomRecords.get(date).get(roomNo).put(timeSlot, new Record());
                 result = "success";
             } else if (!(roomRecords.get(date).get(roomNo).containsKey(timeSlot))) {
-                roomRecords.get(date).get(roomNo).put(timeSlot, null);
+                roomRecords.get(date).get(roomNo).put(timeSlot, new Record());
                 result = "success";
                 writeToLogFile("success: Time slots created for provided date and room." + id);
             } else {

@@ -51,8 +51,8 @@ public class ReplicaManager {
                 replica.start();
                 break;
             case 0:
-                replica = new ReplicaImplM(replicaNum, hasError);
-                replicaBackup = new ReplicaImplM(replicaNum, false);
+                replica = new ReplicaImplR(replicaNum, hasError);
+                replicaBackup = new ReplicaImplR(replicaNum, false);
                 replica.start();
                 break;
             default:
@@ -76,7 +76,7 @@ public class ReplicaManager {
                 if (request.startsWith("error")) {
                     if (request.endsWith("not-available")) {
                         System.out.println("handle crash failure");
-                        //handleNoResponseFailure();
+//                        handleNoResponseFailure();
                     } else {
                         //handle byzantine failure
                         String correctResponse = request.split(":")[1];

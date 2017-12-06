@@ -468,15 +468,22 @@ public class Server implements ServerOperations {
     }
 
     private void handleRequest(String[] data, InetAddress host, int port) throws IOException {
-        int seq = Integer.valueOf(data[0]);
-        processQueue.put(seq, Arrays.copyOfRange(data, 2, data.length));
-        if (expectedSequenceNumber.get() == seq) {
-            processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
-        }
 
+        String ack_message = "ack-=" + replicaIndex + "-=" + data[0];
+        DatagramPacket ack_packet = new DatagramPacket(ack_message.getBytes(), ack_message.length(), InetAddress.getByName(Util.SEQUENCER_HOST), Util.SEQUENCER_PORT);
+        new DatagramSocket().send(ack_packet);
+
+        int seq = Integer.valueOf(data[0]);
+        if (!processQueue.containsKey(seq)) {
+            processQueue.put(seq, Arrays.copyOfRange(data, 2, data.length));
+            if (expectedSequenceNumber.get() == seq) {
+                processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
+            }
+        }
     }
 
     private void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
+        System.out.println(Arrays.deepToString(data));
         String response = "";
         if (data[0].equals("ping")) {
         } else if (data[0].equals("create")) {

@@ -416,7 +416,7 @@ public class Server implements CampusOperations {
         if (available) {
             //todo
             String confirm_cancel = cancelBooking(booking_id, student_id);
-            if (confirm_cancel.equals("Booking Cancelled")) {
+            if (confirm_cancel.equals("success")) {
                 return bookRoom(student_id, new_campus_name, new_room_no, new_date, new_time_slot);
             } else {
                 String message = "Your cancellation was not successful";
@@ -527,11 +527,22 @@ public class Server implements CampusOperations {
             int seq;
             try {
                 seq = Integer.valueOf(data[0]);
-                queue.put(seq, data);
-                if (seq == expected.get())
-                    processQueue(data);
+
+                //send ack
+                String ack_message = "ack-=" + replicaIndex + "-=" + seq;
+                DatagramPacket ack_packet = new DatagramPacket(ack_message.getBytes(), ack_message.length(), InetAddress.getByName(Util.SEQUENCER_HOST), Util.SEQUENCER_PORT);
+                new DatagramSocket().send(ack_packet);
+
+                if (!queue.containsKey(seq)) {
+                    queue.put(seq, data);
+
+                    if (seq == expected.get())
+                        processQueue(data);
+                }
             } catch (NumberFormatException e) {
                 Server.this.processRequest(data, aPacket.getAddress().getHostName(), aPacket.getPort(), true);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
 
@@ -553,7 +564,7 @@ public class Server implements CampusOperations {
             final String function = data[0];
             if (function.equals("ping")) {
                 message = "pinged";
-            }else if (function.equals("create")) {
+            } else if (function.equals("create")) {
                 String admin_id = data[1];
                 int room_number = Integer.valueOf(data[2]);
                 String date = data[3];
