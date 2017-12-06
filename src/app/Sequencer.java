@@ -41,7 +41,7 @@ public class Sequencer {
 
                     queue.put(sequenceNumber, forwardMessage);
                     ack_hashmap.put(sequenceNumber, new HashSet<>());
-                    startActScheduler(sequenceNumber);
+                    startActScheduler(sequenceNumber, 1);
 
                     System.out.println("request: " + new String(forwardMessage));
                     sequenceNumber += 1;
@@ -61,8 +61,8 @@ public class Sequencer {
         System.out.println("Sequencer stopped...");
     }
 
-    private static void startActScheduler(int seq) {
-        System.out.println("scheduler started for " + seq);
+    private static void startActScheduler(int seq, final int attempt) {
+        System.out.println("scheduler started for " + seq + "/" + attempt);
 
         scheduler.schedule(new Runnable() {
             @Override
@@ -79,6 +79,8 @@ public class Sequencer {
                 if (contains) {
                     queue.remove(seq);
                     ack_hashmap.remove(seq);
+                } else if (attempt < 4) {
+                    startActScheduler(seq, attempt + 1);
                 }
             }
         }, 2, TimeUnit.SECONDS);
