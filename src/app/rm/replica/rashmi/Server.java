@@ -4,10 +4,7 @@ import app.Helper;
 import app.Util;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +20,7 @@ public class Server implements CampusOperations {
     String campus_name;
     DatagramSocket aSocket = null;
     int booking_id_seq = 1;
+    boolean notKilled = true;
 
     int replicaIndex;
 
@@ -53,6 +51,7 @@ public class Server implements CampusOperations {
     }
 
     public void stop() {
+        notKilled = false;
         if (aSocket != null) {
             aSocket.close();
             aSocket = null;
@@ -62,7 +61,6 @@ public class Server implements CampusOperations {
 
     @Override
     public String createRoom(String admin_id, int room_number, String date, String[] slots) {
-
         synchronized (hashmap) {
             HashMap<Integer, List<RoomRecordClass>> rr = hashmap.get(date);
             if (rr == null) rr = new HashMap<>();
@@ -496,13 +494,17 @@ public class Server implements CampusOperations {
         try {
             aSocket = new DatagramSocket(null);
             aSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]), Util.getCampusPort(campus_name, replicaIndex)));
-            while (true) {
-                byte[] buffer = new byte[1000];
-                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
-                aSocket.receive(request);
-                String[] data = new String(request.getData()).replace("\0", "").split("-=");
+            while (notKilled) {
+                try {
+                    byte[] buffer = new byte[1000];
+                    DatagramPacket request = new DatagramPacket(buffer, buffer.length);
+                    aSocket.receive(request);
+                    String[] data = new String(request.getData()).replace("\0", "").split("-=");
 
-                new MyThread(request, data).start();
+                    new MyThread(request, data).start();
+                } catch (SocketException e) {
+
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

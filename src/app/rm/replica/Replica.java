@@ -15,6 +15,7 @@ public abstract class Replica<S> {
     protected boolean dataCopied = false;
     protected final int replicaIndex;
     protected Map<String, S> serverMap;
+    private boolean notKilled = true;
 
     private DatagramSocket mSocket;
 
@@ -36,7 +37,7 @@ public abstract class Replica<S> {
                 try {
                     mSocket = new DatagramSocket(null);
                     mSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]), Util.REPLICA_PORT[replicaIndex]));
-                    while (true) {
+                    while (notKilled) {
                         try {
                             byte[] buffer = new byte[2048];
                             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -63,6 +64,14 @@ public abstract class Replica<S> {
         }.start();
     }
 
+    private void stopListening() {
+        notKilled = false;
+        if (mSocket != null) {
+            mSocket.close();
+            mSocket = null;
+        }
+    }
+
     protected void requestData() {
         System.out.println("requesting data...");
         for (int i = 0; (i < Util.REPLICA_HOSTS.length); i++) {
@@ -85,7 +94,7 @@ public abstract class Replica<S> {
                             mapJsonToData(json);
                             System.out.println("Data copied from working replica");
                         }
-                    }catch (SocketTimeoutException e){
+                    } catch (SocketTimeoutException e) {
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -104,9 +113,15 @@ public abstract class Replica<S> {
 
     protected abstract void start(boolean requestData);
 
-    public abstract void stop();
+    public void stop() {
+        stopListening();
+    }
 
-    public abstract void restart();
+    protected void restart() {
+        dataCopied = false;
+        stop();
+        start();
+    }
 
     protected abstract void mapJsonToData(String json);
 
