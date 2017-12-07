@@ -163,8 +163,8 @@ public class ServerImpl {
 		}
 	}
 
-	private boolean contactOtherServers(String query) {
-		// gather data from two other server
+	private DatagramPacket contactOtherServers(ServerDetails s, String query) throws IOException {
+		/*// gather data from two other server
 		CountDownLatch latch = new CountDownLatch(ServerDetails.values().length - 1);
 		for (ServerDetails s : getOtherServer())
 			if (s != null)
@@ -176,7 +176,19 @@ public class ServerImpl {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return true;
+		return true;*/
+		
+		DatagramSocket aSocket = new DatagramSocket();
+		InetAddress aHost = InetAddress.getByName(s.host);
+
+		DatagramPacket request = new DatagramPacket(query.getBytes(), query.length(), aHost, s.port);
+		aSocket.send(request);
+
+		byte[] buffer = new byte[1000];
+		DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+		aSocket.receive(reply);
+		
+		return reply;
 	}
 
 	public String createRoom(String adminID, String roomNo, String date, String timeSlot) {
@@ -234,9 +246,23 @@ public class ServerImpl {
 			if (limit >= 3) {
 				return "OverBooked";
 			} else if (!currentServer.tag.equals(campusName)) {
-				String message = "book-=ID=" + studentID + "-=ROOMNUMBER=" + roomNo + "-=DATE=" + date + "-=SLOT="
-						+ timeSlot + "-=";
-				contactOtherServers(message);
+				for(ServerDetails s : getOtherServer()) {
+					if(s!=null && s.tag.equals(campusName)) {
+						String message = "book-=" /*+ "ID="*/ + studentID + "-=" + s.tag  + "-=" /*+ "ROOMNUMBER="*/ + roomNo
+								+ "-=" /*+ "DATE="*/ + date + "-=" /*+ "SLOT="*/
+								+ timeSlot + "-=";
+						DatagramPacket reply = null;
+						try {
+							reply = contactOtherServers(s, message);
+							result = new String(reply.getData());
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							result = "failed";
+						}
+						break;
+					}
+				}
 			} else if (roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy == null) {
 				roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
 				result = "success";
@@ -272,17 +298,11 @@ public class ServerImpl {
 		synchronized (lock) {
 			try {
 				for (ServerDetails s : concurrentServerList) {
-					DatagramSocket aSocket = new DatagramSocket();
-					InetAddress aHost = InetAddress.getByName(s.host);
-
-					String req = "availability" + "-=" + date;
-					DatagramPacket request = new DatagramPacket(req.getBytes(), req.length(), aHost, s.port);
-					aSocket.send(request);
-
-					byte[] buffer = new byte[1000];
-					DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-					aSocket.receive(reply);
-					list += ", " + (new String(reply.getData()).trim());
+					if(s!=null) {
+						String req = "availability" + "-=" + date;
+						DatagramPacket reply = contactOtherServers(s, req);
+						list += ", " + (new String(reply.getData()).trim());
+					}
 				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
