@@ -1,26 +1,16 @@
-module app {
-    module admin {
-        interface Admin {
-            string createRoom(in string adminID, in long roomNumber, in string date, in string timeSlots);
-
-            string deleteRoom(in string adminID, in long roomNumber, in string date, in string timeSlots);
-        };
-    };
-
-    module student {
-        interface Student {
-            string bookRoom(in string studentID, in string campusName, in long roomNumber, in string date, in string timeSlot);
-
-            string getAvailableTimeSlots(in string studentID, in string date);
-
-            string cancelBooking(in string studentID, in string bookingID);
-
-            string changeReservation(in string studentID, in string bookingID, in string campusName, in long roomNumber, in string date, in string timesSlot);
-        };
-    };
-
-    module server {
-        interface Server : app::admin::Admin, app::student::Student {
+module app
+{
+    module server
+    {
+        interface Server
+        {
+    //        typedef sequence<string> listSlots;
+            string createRoom(in string admin_id, in long room_number, in string date, in string list_of_time_slots);
+            string deleteRoom(in string admin_id, in long room_number, in string date, in string list_of_time_slots);
+            string bookRoom(in string student_id, in string campus_name, in long room_number, in string date, in string slots);
+            string getAvailableTimeSlots(in string student_id,in string date);
+            string cancelBooking(in string student_id, in string booking_id);
+            string changeReservation (in string student_id, in string booking_id, in string new_campus_name, in long new_room_no, in string new_date, in string new_time_slot);
         };
     };
 };
