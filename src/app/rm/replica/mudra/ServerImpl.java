@@ -333,9 +333,8 @@ public class ServerImpl {
 
 	/**
 	 * a common method to record the logs into the log file
-	 *
 	 * @param msg
-	 *            specifies the message to be written into the log file
+	 * specifies the message to be written into the log file
 	 */
 	synchronized public void writeToLogFile(String msg) {
 		try {
