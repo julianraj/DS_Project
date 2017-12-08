@@ -42,6 +42,7 @@ public class ReplicaImplJ extends Replica<Server> {
 
     @Override
     public void stop() {
+        super.stop();
         try {
             if (calendarTask != null) calendarTask.cancel();
             for (String campus : serverMap.keySet()) {
@@ -55,9 +56,7 @@ public class ReplicaImplJ extends Replica<Server> {
     @Override
     public void restart() {
         hasError = false;
-        dataCopied = false;
-        stop();
-        start(true);
+        super.restart();
     }
 
     @Override

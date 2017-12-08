@@ -33,6 +33,7 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                 else details = ServerImpl.ServerDetails.WST;
                 ServerImpl server = new ServerImpl(details, processQueue, expectedSequenceNumber);
                 server.init();
+                serverMap.put(campus, server);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -41,12 +42,10 @@ public class ReplicaImplM extends Replica<ServerImpl> {
 
     @Override
     public void stop() {
-
-    }
-
-    @Override
-    public void restart() {
-
+        super.stop();
+        for (String campus : serverMap.keySet()) {
+            serverMap.get(campus).stop();
+        }
     }
 
     @Override

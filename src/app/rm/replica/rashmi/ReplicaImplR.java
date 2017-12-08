@@ -47,17 +47,11 @@ public class ReplicaImplR extends Replica<Server> {
 
     @Override
     public void stop() {
+        super.stop();
         for (String campus : serverMap.keySet()) {
             serverMap.get(campus).stop();
         }
 
-    }
-
-    @Override
-    public void restart() {
-        dataCopied = false;
-        stop();
-        start();
     }
 
     @Override

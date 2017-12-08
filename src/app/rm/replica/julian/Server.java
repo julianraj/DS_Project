@@ -159,7 +159,7 @@ public class Server implements ServerOperations {
 
     @Override
     public String bookRoom(String studentID, String campusName, int roomNumber, String date, String timeSlot) {
-        String bookingID, response = "failed: ";
+        String bookingID, response = "failed";
         if (!campusName.equals(mCampusName)) {
             String logMessage = "Date: " + new Date().toString();
             logMessage += "\nRequest Type: Book Room";
