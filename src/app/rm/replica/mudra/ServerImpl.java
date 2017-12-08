@@ -316,9 +316,9 @@ public class ServerImpl {
 					if (entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy.matches(studentID)) {
 						roomRecords.get(date1).get(roomNo).put(timeSlot, null);
 						System.out.println("Room cancelled");
-						bookRoom(studentID, newCampusName, newroomNo, date, newtimeSlot);
+						result = bookRoom(studentID, newCampusName, newroomNo, date, newtimeSlot);
 						System.out.println("Changed Booking Successful");
-						result = "success";
+						//result = "success";
 						break;
 					} else {
 						System.out.println("No booking exists. Cancel failed");
