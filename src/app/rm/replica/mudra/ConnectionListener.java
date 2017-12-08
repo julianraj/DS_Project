@@ -11,6 +11,8 @@ import app.rm.replica.mudra.ServerImpl;
 public class ConnectionListener implements Runnable {
     public ServerImpl server;
     DatagramSocket aSocket;
+    boolean killed = false;
+
     public ConnectionListener(ServerImpl server) {
         this.server = server;
     }
@@ -23,7 +25,7 @@ public class ConnectionListener implements Runnable {
             aSocket = new DatagramSocket(server.currentServer.port);
 
             // continuously listen to receive data
-            while (true) {
+            while (!killed) {
                 // create a blank 1000 bytes array to wrap data
                 byte[] buffer = new byte[1000];
 
@@ -45,8 +47,12 @@ public class ConnectionListener implements Runnable {
     }
 
 	public void stop() {
-		aSocket.close();
-	}
+        killed = true;
+        if (aSocket != null) {
+            aSocket.close();
+            aSocket = null;
+        }
+    }
 }
 
 class RequestExecutor extends Thread {
