@@ -159,26 +159,29 @@ public class ServerImpl {
     public String createRoom(String adminID, String roomNo, String date, String timeSlot) {
         int flag = 1;
         synchronized (lock) {
-            if (!(roomRecords.containsKey(date))) {
-                roomRecords.put(date, new HashMap<String, HashMap<String, Record>>());
-                roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
-                roomRecords.get(date).get(roomNo).put(timeSlot, new Record());
-                result = "success";
-            } else if (!(roomRecords.get(date).containsKey(roomNo))) {
-                roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
-                roomRecords.get(date).get(roomNo).put(timeSlot, new Record());
-                result = "success";
-            } else if (!(roomRecords.get(date).get(roomNo).containsKey(timeSlot))) {
-                roomRecords.get(date).get(roomNo).put(timeSlot, new Record());
-                result = "success";
-                writeToLogFile("success: Time slots created for provided date and room." + id);
-            } else {
-                result = "failed";
-                System.out.println("failed: Room already exists");
-                flag = 0;
+            String[] slots = timeSlot.split(",");
+            for (int i = 0; i < slots.length; i++) {
+                if (!(roomRecords.containsKey(date))) {
+                    roomRecords.put(date, new HashMap<String, HashMap<String, Record>>());
+                    roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
+                    roomRecords.get(date).get(roomNo).put(slots[i], new Record());
+                    result = "success";
+                } else if (!(roomRecords.get(date).containsKey(roomNo))) {
+                    roomRecords.get(date).put(roomNo, new HashMap<String, Record>());
+                    roomRecords.get(date).get(roomNo).put(slots[i], new Record());
+                    result = "success";
+                } else if (!(roomRecords.get(date).get(roomNo).containsKey(slots[i]))) {
+                    roomRecords.get(date).get(roomNo).put(slots[i], new Record());
+                    result = "success";
+                    writeToLogFile("success: Time slots created for provided date and room." + id);
+                } else {
+                    result = "failed";
+                    System.out.println("failed: Room already exists");
+                    flag = 0;
+                }
+                if (flag == 1)
+                    System.out.println("Room created");
             }
-            if (flag == 1)
-                System.out.println("Room created");
             return result;
         }
     }
