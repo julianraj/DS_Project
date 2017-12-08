@@ -89,7 +89,7 @@ public class Server implements CampusOperations {
         }
         String parameters = "Room Number: " + room_number + " Date: " + date + " Slots: " + Arrays.deepToString(slots);
         Helper.writelog("Server", null, campus_name, "Create Room", parameters, true, "Room Created");//todo
-        return ("successss");
+        return ("success");
     }
 
     @Override

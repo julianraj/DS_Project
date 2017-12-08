@@ -202,7 +202,6 @@ public class ServerImpl {
 	}
 
 	public String bookRoom(String studentID, String campusName, String roomNo, String date, String timeSlot) {
-		String id = campusName + "B" + String.format("%04d", ++idNo);
 		int limit = Record.checkLimit(studentID);
 		String result = "";
 		synchronized (lock) {
@@ -224,6 +223,7 @@ public class ServerImpl {
 					}
 				}
 			} else if (roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy == null) {
+				String id = campusName + "B" + String.format("%04d", ++idNo);
 				roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
 				result = "success:"+id;
 				System.out.println("Room Booked");
@@ -232,7 +232,7 @@ public class ServerImpl {
 				result = "failed";
 				System.out.println("Booking Already exists");
 			}
-			if (result.equals("success:")) {
+			if (result.contains("success")) {
 				Record.studentBookingCounter.put(studentID, limit + 1);
 			}
 		}

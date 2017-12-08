@@ -59,8 +59,10 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                 expectedSequenceNumber = new AtomicInteger(jsonData.getInt("expected_sequence_number"));
 
                 Record.studentBookingCounter = new HashMap<>();
+                System.out.println("print  student count:");
                 for (int i = 0; i < studentData.length(); i++) {
                     JSONObject obj = studentData.getJSONObject(i);
+                    System.out.println(obj.getString("student_id") + ":" + obj.getInt("booking_count"));
                     Record.studentBookingCounter.put(obj.getString("student_id"), obj.getInt("booking_count"));
                 }
 
