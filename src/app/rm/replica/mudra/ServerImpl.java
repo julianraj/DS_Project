@@ -290,9 +290,6 @@ public class ServerImpl {
     }
 
     public String cancelRoom(String studentID, String bookingID) {
-        Integer tmp = Record.studentBookingCounter.get(studentID);
-        String campusName = bookingID.substring(0, 3);
-        String issuccess = null;
         synchronized (lock) {
             for (Entry<String, HashMap<String, HashMap<String, Record>>> entry1 : roomRecords.entrySet()) {
                 String date = entry1.getKey();
@@ -300,7 +297,7 @@ public class ServerImpl {
                     String roomNo = entry2.getKey();
                     for (Entry<String, Record> entry3 : entry2.getValue().entrySet()) {
                         String timeSlot = entry3.getKey();
-                        if (entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy != null && entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy.matches(studentID)) {
+                        if (entry3.getValue().id.equals(bookingID) && entry3.getValue().bookedBy != null && entry3.getValue().id.equals(bookingID) && entry3.getValue().bookedBy.equals(studentID)) {
                             roomRecords.get(date).get(roomNo).put(timeSlot, null);
                             System.out.println("Room cancelled.");
                             result = "success";
