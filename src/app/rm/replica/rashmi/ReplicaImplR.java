@@ -17,8 +17,8 @@ public class ReplicaImplR extends Replica<Server> {
     public static AtomicInteger expected = new AtomicInteger(1);
     private static Timer timer = new Timer(true);
 
-    public ReplicaImplR(int replicaIndex, boolean hasError) {
-        super(replicaIndex, hasError);
+    public ReplicaImplR(int replicaIndex, boolean hasError, boolean isAvailable) {
+        super(replicaIndex, hasError, isAvailable);
         queue = new HashMap<>();
     }
 
@@ -36,11 +36,11 @@ public class ReplicaImplR extends Replica<Server> {
         for (String campus : campuses) {
             Server server;
             if (campus.equals("KKL")) {
-                server = new Server(KKL_data, student_booking, campus, queue, expected, replicaIndex);
+                server = new Server(KKL_data, student_booking, campus, queue, expected, replicaIndex, hasError);
             } else if (campus.equals("DVL")) {
-                server = new Server(DVL_data, student_booking, campus, queue, expected, replicaIndex);
+                server = new Server(DVL_data, student_booking, campus, queue, expected, replicaIndex, hasError);
             } else {
-                server = new Server(WST_data, student_booking, campus, queue, expected, replicaIndex);
+                server = new Server(WST_data, student_booking, campus, queue, expected, replicaIndex, hasError);
             }
             serverMap.put(campus, server);
             server.start();

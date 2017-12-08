@@ -21,15 +21,16 @@ public class Server implements CampusOperations {
     DatagramSocket aSocket = null;
     int booking_id_seq = 1;
     boolean notKilled = true;
-
+    boolean hasError = false;
     int replicaIndex;
 
-    public Server(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap, HashMap<String, Integer> student_booking, String campus, HashMap<Integer, String[]> queue, AtomicInteger expected, int replicaIndex) {
+    public Server(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap, HashMap<String, Integer> student_booking, String campus, HashMap<Integer, String[]> queue, AtomicInteger expected, int replicaIndex, boolean hasError) {
         this.hashmap = hashmap;
         this.campus_name = campus;
         this.student_booking = student_booking;
         this.queue = queue;
         this.expected = expected;
+        this.hasError = hasError;
         this.replicaIndex = replicaIndex;
 
         /*List<RoomRecordClass> list_time_slots = new ArrayList<>();
@@ -246,6 +247,9 @@ public class Server implements CampusOperations {
 
     @Override
     public String getTimeSlotsCampus(String date) {
+        if (hasError) {
+            return "success: KKL9 DVL8 WST6";
+        }
         DatagramSocket socket = null;
         String reply = "";
         try {

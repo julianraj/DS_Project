@@ -13,8 +13,8 @@ public class ReplicaImplM extends Replica<ServerImpl> {
     private HashMap<Integer, String[]> processQueue = new HashMap<>();
     private static AtomicInteger expectedSequenceNumber = new AtomicInteger(1);
 
-    public ReplicaImplM(int replicaIndex, boolean hasError) {
-        super(replicaIndex, hasError);
+    public ReplicaImplM(int replicaIndex, boolean hasError, boolean isAvailable) {
+        super(replicaIndex, hasError, isAvailable);
 
     }
 
@@ -31,7 +31,7 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                 if (campus.equals("KKL")) details = ServerImpl.ServerDetails.KKL;
                 else if (campus.equals("DVL")) details = ServerImpl.ServerDetails.DVL;
                 else details = ServerImpl.ServerDetails.WST;
-                ServerImpl server = new ServerImpl(details, mData.get(campus), processQueue, expectedSequenceNumber);
+                ServerImpl server = new ServerImpl(details, mData.get(campus), processQueue, expectedSequenceNumber, hasError);
                 server.init();
                 serverMap.put(campus, server);
             }

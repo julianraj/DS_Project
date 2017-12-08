@@ -1,22 +1,14 @@
 package app.rm.replica.mudra;
 
 import app.Util;
-import app.rm.replica.akshita.RoomRecord;
 
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 public class ServerImpl {
 
@@ -27,6 +19,7 @@ public class ServerImpl {
 	public String bookingReply = "", cancelReply = "";
 	private HashMap<Integer, String[]> processQueue = new HashMap<>();
 	String result = "";
+	boolean hasError = false;
 
 	// server details
 	public enum ServerDetails {
@@ -60,7 +53,7 @@ public class ServerImpl {
 	private int idNo = 0;
 
 	// HashMap database
-	private final HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords = new HashMap<String, HashMap<String, HashMap<String, Record>>>();
+	private HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords;
 
 	// current server configuration
 	public ServerDetails currentServer;
@@ -76,13 +69,16 @@ public class ServerImpl {
 	 *
 	 * @param currentServer
 	 *            to configure our server
+	 * @param hasError
 	 */
-	public ServerImpl(ServerDetails currentServer, HashMap<Integer, String[]> processQueue,
-			AtomicInteger expectedSequenceNumber) {
+	public ServerImpl(ServerDetails currentServer, HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords, HashMap<Integer, String[]> processQueue,
+					  AtomicInteger expectedSequenceNumber, boolean hasError) {
 		super();
 		this.currentServer = currentServer;
 		this.processQueue = processQueue;
 		this.expectedSequenceNumber = expectedSequenceNumber;
+		this.roomRecords= roomRecords;
+		this.hasError = hasError;
 		// init();
 	}
 
@@ -260,6 +256,9 @@ public class ServerImpl {
  	}
 
 	public String getTimeSlots(String date) {
+		if(hasError){
+			return "failed";
+		}
 		String list=currentServer.tag + getLocalCount(date);
 		synchronized (lock) {
 			try {
