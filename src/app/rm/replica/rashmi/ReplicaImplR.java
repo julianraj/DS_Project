@@ -24,6 +24,8 @@ public class ReplicaImplR extends Replica<Server> {
 
     @Override
     protected void start(boolean requestData) {
+        if (requestData) requestData();
+
         TimerTask timer_task = new TimerTask() {
             @Override
             public void run() {

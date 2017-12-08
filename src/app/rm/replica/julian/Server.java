@@ -52,9 +52,9 @@ public class Server implements ServerOperations {
                         } catch (SocketException e) {
                         }
                     }
-                } catch (IOException e){
+                } catch (IOException e) {
 
-                }finally {
+                } finally {
                     if (mSocket != null)
                         mSocket.close();
                     mSocket = null;
@@ -96,7 +96,7 @@ public class Server implements ServerOperations {
 
                 roomData.put(roomNumber, records);
                 this.mData.put(date, roomData);
-                response = "success1: Time slots created for provided date and room.";
+                response = "success: Time slots created for provided date and room.";
             }
         } catch (Exception e) {
             response = "failed: " + e.getMessage();

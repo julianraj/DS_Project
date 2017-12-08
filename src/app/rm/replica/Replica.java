@@ -120,7 +120,7 @@ public abstract class Replica<S> {
     public void restart() {
         dataCopied = false;
         stop();
-        start();
+        start(true);
     }
 
     protected abstract void mapJsonToData(String json);
