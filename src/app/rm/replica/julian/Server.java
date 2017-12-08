@@ -35,32 +35,39 @@ public class Server implements ServerOperations {
     }
 
     public void start() throws Exception {
-        try {
-            mSocket = new DatagramSocket(null);
-            mSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]), Util.getCampusPort(mCampusName, replicaIndex)));
-            System.out.println("Server for " + mCampusName + " is running...");
-            while (notKilled) {
+        new Thread() {
+            @Override
+            public void run() {
                 try {
-                    byte[] buffer = new byte[2048];
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    mSocket.receive(packet);
+                    mSocket = new DatagramSocket(null);
+                    mSocket.bind(new InetSocketAddress(InetAddress.getByName(Util.REPLICA_HOSTS[replicaIndex]), Util.getCampusPort(mCampusName, replicaIndex)));
+                    System.out.println("Server for " + mCampusName + " is running...");
+                    while (notKilled) {
+                        try {
+                            byte[] buffer = new byte[2048];
+                            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                            mSocket.receive(packet);
 
-                    new ProcessThread(packet).start();
-                } catch (SocketException e) {
+                            new ProcessThread(packet).start();
+                        } catch (SocketException e) {
+                        }
+                    }
+                } catch (IOException e){
+
+                }finally {
+                    if (mSocket != null)
+                        mSocket.close();
+                    mSocket = null;
                 }
             }
-        } finally {
-            if (mSocket != null)
-                mSocket.close();
-            mSocket = null;
-        }
+        }.start();
     }
 
     public void stop() {
         notKilled = false;
+        System.out.println(mCampusName + " socket.close");
         if (mSocket != null) {
             mSocket.close();
-            System.out.println(mCampusName + " socket.close");
             mSocket = null;
         }
     }
@@ -89,7 +96,7 @@ public class Server implements ServerOperations {
 
                 roomData.put(roomNumber, records);
                 this.mData.put(date, roomData);
-                response = "success: Time slots created for provided date and room.";
+                response = "success1: Time slots created for provided date and room.";
             }
         } catch (Exception e) {
             response = "failed: " + e.getMessage();

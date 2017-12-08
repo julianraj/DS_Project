@@ -33,7 +33,6 @@ public class Sequencer {
                 socket.receive(packet);
                 String request = new String(packet.getData()).replace("\0", "");
                 if ((request.split("-=")[0]).equals("ack")) {
-                    System.out.println(request);
                     ack_hashmap.get(Integer.valueOf(request.split("-=")[2])).add(request.split("-=")[1]);
 
                 } else {
@@ -62,7 +61,6 @@ public class Sequencer {
     }
 
     private static void startActScheduler(int seq, final int attempt) {
-        System.out.println("scheduler started for " + seq + "/" + attempt);
 
         scheduler.schedule(new Runnable() {
             @Override

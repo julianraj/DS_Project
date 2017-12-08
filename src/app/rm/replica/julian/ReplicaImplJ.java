@@ -44,8 +44,10 @@ public class ReplicaImplJ extends Replica<Server> {
     public void stop() {
         super.stop();
         try {
+            System.out.println(Arrays.deepToString(serverMap.keySet().toArray()));
             if (calendarTask != null) calendarTask.cancel();
             for (String campus : serverMap.keySet()) {
+                System.out.println(campus);
                 serverMap.get(campus).stop();
             }
         } catch (Exception e) {
@@ -179,18 +181,15 @@ public class ReplicaImplJ extends Replica<Server> {
     }
 
     private void startServer(String campus) {
-        Thread thread = new Thread(() -> {
-            try {
-                Server server = new Server(campus, mData.get(campus), mStudentData, processQueue, expectedSequenceNumber, replicaIndex);
-                server.setHasError(hasError);
-                serverMap.put(campus, server);
-                server.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        thread.setName(campus);
-        thread.start();
+        try {
+            Server server = new Server(campus, mData.get(campus), mStudentData, processQueue, expectedSequenceNumber, replicaIndex);
+            server.setHasError(hasError);
+            serverMap.put(campus, server);
+            server.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void startWeekCounter() {

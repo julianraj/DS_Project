@@ -55,7 +55,7 @@ public class ServerImpl {
     private int idNo = 0;
 
     // HashMap database
-    private final HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords = new HashMap<String, HashMap<String, HashMap<String, Record>>>();
+    private HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords;
 
     // current server configuration
     public ServerDetails currentServer;
@@ -71,11 +71,13 @@ public class ServerImpl {
      *
      * @param currentServer to configure our server
      */
-    public ServerImpl(ServerDetails currentServer, HashMap<Integer, String[]> processQueue,
+    public ServerImpl(ServerDetails currentServer, HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords,
+                      HashMap<Integer, String[]> processQueue,
                       AtomicInteger expectedSequenceNumber) {
         super();
         this.currentServer = currentServer;
         this.processQueue = processQueue;
+        this.roomRecords = roomRecords;
         this.expectedSequenceNumber = expectedSequenceNumber;
         // init();
     }
@@ -344,7 +346,7 @@ public class ServerImpl {
     }
 
     public void handleRequest(String[] data, InetAddress host, int port) throws IOException {
-        System.out.println("processRequest" + Arrays.deepToString(data));
+        System.out.println("handleRequest" + Arrays.deepToString(data));
         int seq = Integer.valueOf(data[0]);
         processQueue.put(seq, Arrays.copyOfRange(data, 2, data.length));
         if (expectedSequenceNumber.get() == seq) {

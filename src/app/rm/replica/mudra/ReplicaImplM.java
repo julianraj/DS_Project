@@ -31,7 +31,7 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                 if (campus.equals("KKL")) details = ServerImpl.ServerDetails.KKL;
                 else if (campus.equals("DVL")) details = ServerImpl.ServerDetails.DVL;
                 else details = ServerImpl.ServerDetails.WST;
-                ServerImpl server = new ServerImpl(details, processQueue, expectedSequenceNumber);
+                ServerImpl server = new ServerImpl(details, mData.get(campus), processQueue, expectedSequenceNumber);
                 server.init();
                 serverMap.put(campus, server);
             }
@@ -55,6 +55,14 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                 JSONObject jsonData = new JSONObject(json);
                 JSONArray database = jsonData.getJSONArray("room_records");
                 JSONArray studentData = jsonData.getJSONArray("student_booking");
+
+                expectedSequenceNumber = new AtomicInteger(jsonData.getInt("expected_sequence_number"));
+
+                Record.studentBookingCounter = new HashMap<>();
+                for (int i = 0; i < studentData.length(); i++) {
+                    JSONObject obj = studentData.getJSONObject(i);
+                    Record.studentBookingCounter.put(obj.getString("student_id"), obj.getInt("booking_count"));
+                }
 
                 for (int i = 0; i < database.length(); i++) {
                     JSONObject obj = database.getJSONObject(i);
@@ -137,12 +145,12 @@ public class ReplicaImplM extends Replica<ServerImpl> {
         myData.put("room_records", database);
 
         JSONArray bookingCountData = new JSONArray();
-        /*for (String student : mStudentData.keySet()) {
+        for (String student : Record.studentBookingCounter.keySet()) {
             JSONObject obj = new JSONObject();
             obj.put("student_id", student);
-            obj.put("booking_count", mStudentData.get(student));
+            obj.put("booking_count", Record.studentBookingCounter.get(student));
             bookingCountData.put(obj);
-        }*/
+        }
         myData.put("student_booking", bookingCountData);
         myData.put("expected_sequence_number", expectedSequenceNumber);
 

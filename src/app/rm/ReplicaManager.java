@@ -41,8 +41,8 @@ public class ReplicaManager {
                 replica.start();
                 break;
             case 2:
-                replica = new ReplicaImplJ(replicaNum, hasError, available);
-                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
+                replica = new ReplicaImplR(replicaNum, hasError);
+                replicaBackup = new ReplicaImplR(replicaNum, false);
                 replica.start();
                 break;
             case 1:
