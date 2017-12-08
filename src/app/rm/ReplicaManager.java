@@ -41,8 +41,8 @@ public class ReplicaManager {
                 replica.start();
                 break;
             case 2:
-                replica = new ReplicaImplR(replicaNum, hasError);
-                replicaBackup = new ReplicaImplR(replicaNum, false);
+                replica = new ReplicaImplJ(replicaNum, hasError, available);
+                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
                 replica.start();
                 break;
             case 1:
@@ -113,7 +113,6 @@ public class ReplicaManager {
         if (replica != null) {
             new Thread(() -> {
                 boolean available = replica.ping(campus);
-                System.out.println(campus + " ping: " + available);
                 try {
                     synchronized (replica) {
                         if (!available && replica != null) {

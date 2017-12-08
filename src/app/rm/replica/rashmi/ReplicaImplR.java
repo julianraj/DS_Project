@@ -66,16 +66,13 @@ public class ReplicaImplR extends Replica<Server> {
         JSONArray student_booking_array = database.getJSONArray("student_booking");
 
         student_booking = new HashMap<>();
-
-        HashMap<String, HashMap<Integer, List<RoomRecordClass>>> campus_data = new HashMap<>();
-
-
         for (int stu_record_num = 0; stu_record_num < student_booking_array.length(); stu_record_num++) {
             JSONObject student = student_booking_array.getJSONObject(stu_record_num);
             student_booking.put(student.getString("student_id"), student.getInt("booking_id"));
         }
 
         for (int campus_record_num = 0; campus_record_num < room_records_array.length(); campus_record_num++) {
+            HashMap<String, HashMap<Integer, List<RoomRecordClass>>> campus_data = new HashMap<>();
             String campus = room_records_array.getJSONObject(campus_record_num).get("campus").toString();
 
 

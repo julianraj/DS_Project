@@ -52,9 +52,9 @@ public class Server implements ServerOperations {
                         } catch (SocketException e) {
                         }
                     }
-                } catch (IOException e) {
+                } catch (IOException e){
 
-                } finally {
+                }finally {
                     if (mSocket != null)
                         mSocket.close();
                     mSocket = null;

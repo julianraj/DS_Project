@@ -346,6 +346,10 @@ public class ServerImpl {
     }
 
     public void handleRequest(String[] data, InetAddress host, int port) throws IOException {
+        String ack_message = "ack-=0-=" + data[0];
+        DatagramPacket ack_packet = new DatagramPacket(ack_message.getBytes(), ack_message.length(), InetAddress.getByName(Util.SEQUENCER_HOST), Util.SEQUENCER_PORT);
+        new DatagramSocket().send(ack_packet);
+
         System.out.println("handleRequest" + Arrays.deepToString(data));
         int seq = Integer.valueOf(data[0]);
         processQueue.put(seq, Arrays.copyOfRange(data, 2, data.length));
@@ -357,7 +361,10 @@ public class ServerImpl {
     public void processRequest(String[] data, InetAddress host, int port, boolean fromQueue) throws IOException {
         DatagramSocket aSocket = new DatagramSocket();
         System.out.println("processRequest" + Arrays.deepToString(data));
-        if (data[0].equals("create")) {
+        if (data[0].equals("ping")) {
+            DatagramPacket reply = new DatagramPacket("".getBytes(), "".length(), host, port);
+            aSocket.send(reply);
+        } else if (data[0].equals("create")) {
             String response = createRoom(data[1], data[2], data[3], data[4]);
             response = "0-=" + response;
             DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);

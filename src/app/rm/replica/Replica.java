@@ -91,7 +91,12 @@ public abstract class Replica<S> {
                         if (!dataCopied) {
                             dataCopied = true;
                             String json = new String(buffer).replace("\0", "");
+
+                            System.out.println(json);
+
                             mapJsonToData(json);
+
+                            //System.out.println(mapDataToJson());
                             System.out.println("Data copied from working replica");
                         }
                     } catch (SocketTimeoutException e) {

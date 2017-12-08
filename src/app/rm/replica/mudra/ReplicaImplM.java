@@ -156,9 +156,4 @@ public class ReplicaImplM extends Replica<ServerImpl> {
 
         return myData.toString(4);
     }
-
-    @Override
-    public boolean ping(String campus) {
-        return false;
-    }
 }
