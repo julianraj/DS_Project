@@ -299,8 +299,7 @@ public class ServerImpl {
                 for (Entry<String, HashMap<String, Record>> entry2 : entry1.getValue().entrySet()) {
                     String roomNo = entry2.getKey();
                     for (Entry<String, Record> entry3 : entry2.getValue().entrySet()) {
-                        String timeSlot = entry3.getKey();
-                        if (entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy != null && entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy.matches(studentID)) {
+                        String timeSlot = entry3.getKey();if (entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy != null && entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy.matches(studentID)) {
                             roomRecords.get(date).get(roomNo).put(timeSlot, null);
                             System.out.println("Room cancelled.");
                             result = "success";
@@ -329,8 +328,8 @@ public class ServerImpl {
                             System.out.println("Room cancelled");
                             result = bookRoom(studentID, newCampusName, newroomNo, date, newtimeSlot);
                             System.out.println("Changed Booking Successful");
-                            //result = "success";
-                            break;
+                            System.out.println(result);
+                            return result;
                         } else {
                             System.out.println("No booking exists. Cancel failed");
                             result = "failed";
@@ -341,6 +340,7 @@ public class ServerImpl {
                 }
             }
         }
+        System.out.println(result);
         return result;
     }
 
