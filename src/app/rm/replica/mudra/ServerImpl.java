@@ -86,14 +86,6 @@ public class ServerImpl {
 		// init();
 	}
 
-	public ServerDetails[] getOtherServer() {
-		ServerDetails[] serverDatas = ServerDetails.values();
-		for (int i = 0; i < serverDatas.length; i++)
-			if (serverDatas[i].equals(currentServer))
-				serverDatas[i] = null;
-		return serverDatas;
-	}
-
 	/**
 	 * initializes server object with default values also creates log files for the
 	 * server initializes File Reader and Writer
@@ -144,23 +136,12 @@ public class ServerImpl {
 		activateListener();
 	}
 
-	class getDataFromUDP implements Runnable {
-
-		CountDownLatch signal = null;
-		String query = null;
-		int port = 0;
-
-		public getDataFromUDP(CountDownLatch latch, int n_port, String n_query) {
-			this.signal = latch;
-			this.port = n_port;
-			this.query = n_query;
-		}
-
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-
-		}
+	public ServerDetails[] getOtherServer() {
+		ServerDetails[] serverDatas = ServerDetails.values();
+		for (int i = 0; i < serverDatas.length; i++)
+			if (serverDatas[i].equals(currentServer))
+				serverDatas[i] = null;
+		return serverDatas;
 	}
 
 	private DatagramPacket contactOtherServers(ServerDetails s, String query) throws IOException {
@@ -173,7 +154,7 @@ public class ServerImpl {
 		byte[] buffer = new byte[1000];
 		DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
 		aSocket.receive(reply);
-		
+
 		return reply;
 	}
 
@@ -232,10 +213,10 @@ public class ServerImpl {
 			if (limit >= 3) {
 				return "failed";
 			} else if (!currentServer.tag.equals(campusName)) {
-				for(ServerDetails s : getOtherServer()) {
-					if(s!=null && s.tag.equals(campusName)) {
-						String message = "book-=" /*+ "ID="*/ + studentID + "-=" + s.tag  + "-=" /*+ "ROOMNUMBER="*/ + roomNo
-								+ "-=" /*+ "DATE="*/ + date + "-=" /*+ "SLOT="*/
+				for (ServerDetails s : getOtherServer()) {
+					if (s != null && s.tag.equals(campusName)) {
+						String message = "book-=" /* + "ID=" */ + studentID + "-=" + s.tag + "-=" /* + "ROOMNUMBER=" */
+								+ roomNo + "-=" /* + "DATE=" */ + date + "-=" /* + "SLOT=" */
 								+ timeSlot + "-=";
 						DatagramPacket reply = null;
 						try {
@@ -265,32 +246,37 @@ public class ServerImpl {
 	}
 
 	private int getLocalCount(String date) {
-		int currentCount = 0;
-		if (roomRecords.containsKey(date))
-			for (Entry<String, HashMap<String, Record>> e : roomRecords.get(date).entrySet()) {
-				for (Entry<String, Record> e2 : e.getValue().entrySet()) {
-					if (e2.getValue().bookedBy == null)
+ 		int currentCount = 0;
+ 		if (roomRecords.containsKey(date)) {
+			for (Entry<String, HashMap<String, Record>> entry2 : roomRecords.get(date).entrySet()) {
+				String roomNo = entry2.getKey();
+				for (Entry<String, Record> entry3 : entry2.getValue().entrySet()) {
+					String timeSlot = entry3.getKey();
+					if (entry3.getValue().bookedBy == null) {
 						currentCount++;
+					} 
 				}
 			}
-		return currentCount;
-	}
+		}
+ 		return currentCount;
+ 	}
 
 	public String getTimeSlots(String date) {
-		String list = currentServer.tag + getLocalCount(date);
+		String list=currentServer.tag + getLocalCount(date);
 		synchronized (lock) {
 			try {
 				for (ServerDetails s : concurrentServerList) {
-					if(s!=null) {
-						String req = "availability" + ", " + date;
+					if (s != null) {
+						String req = "availability" + "-=" + date;
 						DatagramPacket reply = contactOtherServers(s, req);
-						list += ", " + (new String(reply.getData()).trim());
+						String s1 = new String(reply.getData()).substring(3,6) + new String(reply.getData()).substring(7,8);
+						list += " " +s1;
 					}
 				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
-			System.out.println("Avialable time Slots" + list);
+			System.out.println("Avialable time Slots:"+list);
 			writeToLogFile("Student(" + id + ") - requested time slots : " + list);
 			return "success:" + list;
 		}
@@ -337,8 +323,7 @@ public class ServerImpl {
 						System.out.println("Changed Booking Successful");
 						result = "success";
 						break;
-					}
-					else {
+					} else {
 						System.out.println("No booking exists. Cancel failed");
 						result = "failed";
 					}
@@ -347,6 +332,7 @@ public class ServerImpl {
 		}
 		return result;
 	}
+
 	/**
 	 * a common method to record the logs into the log file
 	 *
@@ -395,7 +381,7 @@ public class ServerImpl {
 		} else if (data[0].equals("availability")) {
 			String response;
 			if (fromQueue)
-				response = getTimeSlots(data[1]);
+				response = getTimeSlots(data[2]);
 			else
 				response = currentServer.tag + " " + getLocalCount(data[1]);
 			response = "0-=" + response;
