@@ -164,20 +164,6 @@ public class ServerImpl {
 	}
 
 	private DatagramPacket contactOtherServers(ServerDetails s, String query) throws IOException {
-		/*// gather data from two other server
-		CountDownLatch latch = new CountDownLatch(ServerDetails.values().length - 1);
-		for (ServerDetails s : getOtherServer())
-			if (s != null)
-				new Thread((Runnable) new getDataFromUDP(latch, s.port, query)).start();
-		try {
-			// wait until got response from all other servers
-			latch.await();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return true;*/
-		
 		DatagramSocket aSocket = new DatagramSocket();
 		InetAddress aHost = InetAddress.getByName(s.host);
 
@@ -244,7 +230,7 @@ public class ServerImpl {
 		String result = "";
 		synchronized (lock) {
 			if (limit >= 3) {
-				return "OverBooked";
+				return "failed";
 			} else if (!currentServer.tag.equals(campusName)) {
 				for(ServerDetails s : getOtherServer()) {
 					if(s!=null && s.tag.equals(campusName)) {
@@ -256,7 +242,6 @@ public class ServerImpl {
 							reply = contactOtherServers(s, message);
 							result = new String(reply.getData());
 						} catch (IOException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 							result = "failed";
 						}
@@ -265,16 +250,14 @@ public class ServerImpl {
 				}
 			} else if (roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy == null) {
 				roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
-				result = "success";
+				result = "success:";
 				System.out.println("Room Booked");
-				//System.out.println(roomRecords.get(date).get(roomNo).get(timeSlot).id);
-				//System.out.println(roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy);
 				writeToLogFile("success: Room booked with bookingID of " + id);
 			} else if (roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy != null) {
 				result = "failed";
 				System.out.println("Booking Already exists");
 			}
-			if (result.equals("success")) {
+			if (result.equals("success:")) {
 				Record.studentBookingCounter.put(studentID, limit + 1);
 			}
 		}
@@ -294,12 +277,12 @@ public class ServerImpl {
 	}
 
 	public String getTimeSlots(String date) {
-		String list = currentServer.tag + " " + getLocalCount(date);
+		String list = currentServer.tag + getLocalCount(date);
 		synchronized (lock) {
 			try {
 				for (ServerDetails s : concurrentServerList) {
 					if(s!=null) {
-						String req = "availability" + "-=" + date;
+						String req = "availability" + ", " + date;
 						DatagramPacket reply = contactOtherServers(s, req);
 						list += ", " + (new String(reply.getData()).trim());
 					}
@@ -364,26 +347,6 @@ public class ServerImpl {
 		}
 		return result;
 	}
-
-	/**
-	 * Returns the size of HashMap size : count of all records in the HashMap this
-	 * method is called by the ConnectionListener when it receives the
-	 * 'getRecordCount' request from another server via UDP
-	 *
-	 * @param ip
-	 *            specifies the IP address of the server making request to get count
-	 * @return server name and HashMap record count merged in single string
-	 */
-	public String getSize(String ip) {
-		// return the count
-		writeToLogFile(ip + " - requested records count : " + roomRecords.size());
-		int size = 0;
-		synchronized (lock) {
-			size = roomRecords.entrySet().stream().map((e) -> e.getValue().size()).reduce(size, Integer::sum);
-		}
-		return currentServer.tag + size;
-	}
-
 	/**
 	 * a common method to record the logs into the log file
 	 *
