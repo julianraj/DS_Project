@@ -206,7 +206,7 @@ public class ServerImpl {
 	}
 
 	public String bookRoom(String studentID, String campusName, String roomNo, String date, String timeSlot) {
-		String id = currentServer.tag + "B" + String.format("%04d", ++idNo);
+		String id = campusName + "B" + String.format("%04d", ++idNo);
 		int limit = Record.checkLimit(studentID);
 		String result = "";
 		synchronized (lock) {
@@ -215,13 +215,11 @@ public class ServerImpl {
 			} else if (!currentServer.tag.equals(campusName)) {
 				for (ServerDetails s : getOtherServer()) {
 					if (s != null && s.tag.equals(campusName)) {
-						String message = "book-=" /* + "ID=" */ + studentID + "-=" + s.tag + "-=" /* + "ROOMNUMBER=" */
-								+ roomNo + "-=" /* + "DATE=" */ + date + "-=" /* + "SLOT=" */
-								+ timeSlot + "-=";
+						String message = "book"+ "-=" + studentID + "-=" + s.tag + "-="+ roomNo + "-="+ date + "-="+ timeSlot + "-=";
 						DatagramPacket reply = null;
 						try {
 							reply = contactOtherServers(s, message);
-							result = new String(reply.getData());
+							result = new String(reply.getData()).substring(3,21);
 						} catch (IOException e) {
 							e.printStackTrace();
 							result = "failed";
@@ -231,7 +229,7 @@ public class ServerImpl {
 				}
 			} else if (roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy == null) {
 				roomRecords.get(date).get(roomNo).put(timeSlot, new Record(id, studentID));
-				result = "success:";
+				result = "success:"+id;
 				System.out.println("Room Booked");
 				writeToLogFile("success: Room booked with bookingID of " + id);
 			} else if (roomRecords.get(date).get(roomNo).get(timeSlot).bookedBy != null) {
@@ -242,7 +240,7 @@ public class ServerImpl {
 				Record.studentBookingCounter.put(studentID, limit + 1);
 			}
 		}
-		return result + id;
+		return result;
 	}
 
 	private int getLocalCount(String date) {
@@ -278,7 +276,7 @@ public class ServerImpl {
 			}
 			System.out.println("Avialable time Slots:"+list);
 			writeToLogFile("Student(" + id + ") - requested time slots : " + list);
-			return "success:" + list;
+			return "success: " + list;
 		}
 	}
 
