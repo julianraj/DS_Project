@@ -52,51 +52,56 @@ public class ReplicaImplM extends Replica<ServerImpl> {
     protected void mapJsonToData(String json) {
         try {
             if (mData.isEmpty()) {
-                JSONObject jsonData = new JSONObject(json);
-                JSONArray database = jsonData.getJSONArray("room_records");
-                JSONArray studentData = jsonData.getJSONArray("student_booking");
+                synchronized (Record.studentBookingCounter) {
+                    JSONObject jsonData = new JSONObject(json);
+                    JSONArray database = jsonData.getJSONArray("room_records");
+                    JSONArray studentData = jsonData.getJSONArray("student_booking");
 
-                expectedSequenceNumber = new AtomicInteger(jsonData.getInt("expected_sequence_number"));
+                    expectedSequenceNumber = new AtomicInteger(jsonData.getInt("expected_sequence_number"));
 
-                Record.studentBookingCounter = new HashMap<>();
-                System.out.println("print  student count:");
-                for (int i = 0; i < studentData.length(); i++) {
-                    JSONObject obj = studentData.getJSONObject(i);
-                    System.out.println(obj.getString("student_id") + ":" + obj.getInt("booking_count"));
-                    Record.studentBookingCounter.put(obj.getString("student_id"), obj.getInt("booking_count"));
-                }
-
-                for (int i = 0; i < database.length(); i++) {
-                    JSONObject obj = database.getJSONObject(i);
-                    JSONArray campusData = obj.getJSONArray("data");
-                    HashMap<String, HashMap<String, HashMap<String, Record>>> data = new HashMap<>();
-
-                    for (int j = 0; j < campusData.length(); j++) {
-                        JSONObject campusObj = campusData.getJSONObject(j);
-                        HashMap<String, HashMap<String, Record>> roomData = new HashMap<>();
-                        JSONArray rooms = campusObj.getJSONArray("rooms");
-
-                        for (int k = 0; k < rooms.length(); k++) {
-                            JSONObject roomObj = rooms.getJSONObject(k);
-                            JSONArray recordData = roomObj.getJSONArray("records");
-                            HashMap<String, Record> records = new HashMap<>();
-
-                            for (int l = 0; l < recordData.length(); l++) {
-                                JSONObject recordObj = recordData.getJSONObject(l);
-
-                                Record record = null;
-                                if (recordObj.has("booked_by")) {
-                                    record = new Record();
-                                    record.bookedBy = recordObj.getString("booked_by");
-                                    record.id = recordObj.getString("booking_id");
-                                }
-                                records.put(recordObj.getString("time_slot"), record);
-                            }
-                            roomData.put(roomObj.getString("room"), records);
-                        }
-                        data.put(campusObj.getString("date"), roomData);
+                    Record.studentBookingCounter = new HashMap<>();
+                    System.out.println("print  student count:");
+                    for (int i = 0; i < studentData.length(); i++) {
+                        JSONObject obj = studentData.getJSONObject(i);
+                        System.out.println(obj.getString("student_id") + ":" + obj.getInt("booking_count"));
+                        Record.studentBookingCounter.put(obj.getString("student_id"), obj.getInt("booking_count"));
                     }
-                    mData.put(obj.getString("campus"), data);
+
+                    for (int i = 0; i < database.length(); i++) {
+                        JSONObject obj = database.getJSONObject(i);
+                        JSONArray campusData = obj.getJSONArray("data");
+                        HashMap<String, HashMap<String, HashMap<String, Record>>> data = new HashMap<>();
+
+                        for (int j = 0; j < campusData.length(); j++) {
+                            JSONObject campusObj = campusData.getJSONObject(j);
+                            HashMap<String, HashMap<String, Record>> roomData = new HashMap<>();
+                            JSONArray rooms = campusObj.getJSONArray("rooms");
+
+                            for (int k = 0; k < rooms.length(); k++) {
+                                JSONObject roomObj = rooms.getJSONObject(k);
+                                JSONArray recordData = roomObj.getJSONArray("records");
+                                HashMap<String, Record> records = new HashMap<>();
+
+                                for (int l = 0; l < recordData.length(); l++) {
+                                    JSONObject recordObj = recordData.getJSONObject(l);
+
+                                    Record record = null;
+                                    if (recordObj.has("booked_by")) {
+                                        record = new Record();
+                                        record.bookedBy = recordObj.getString("booked_by");
+                                        record.id = recordObj.getString("booking_id");
+                                    }
+                                    records.put(recordObj.getString("time_slot"), record);
+                                }
+                                roomData.put(roomObj.getString("room"), records);
+                            }
+                            data.put(campusObj.getString("date"), roomData);
+                        }
+                        mData.put(obj.getString("campus"), data);
+                    }
+                }
+                for (String campus : serverMap.keySet()) {
+                    serverMap.get(campus).setExpectedSequenceNumber(expectedSequenceNumber);
                 }
             }
         } catch (Exception e) {

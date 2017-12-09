@@ -24,6 +24,10 @@ public class ServerImpl {
     String result = "";
     boolean hasError = false;
 
+    public void setExpectedSequenceNumber(AtomicInteger expectedSequenceNumber) {
+        this.expectedSequenceNumber = expectedSequenceNumber;
+    }
+
     // server details
     public enum ServerDetails {
         KKL("KRIKLAND-SERVER", "KKL", Util.REPLICA_HOSTS[0], Util.KKL_PORT[0], new AtomicInteger(1)), DVL(
@@ -335,7 +339,7 @@ public class ServerImpl {
                             System.out.println("No booking exists. Cancel failed");
                             result = "failed";
                         }
-                    }catch (NullPointerException e){
+                    } catch (NullPointerException e) {
 
                     }
                 }

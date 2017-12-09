@@ -12,10 +12,12 @@ public abstract class Replica<S> {
 
     protected boolean hasError;
     protected boolean isAvailable = true;
-    protected boolean dataCopied = false;
+    public boolean dataCopied = true;
     protected final int replicaIndex;
     protected Map<String, S> serverMap;
     private boolean notKilled = true;
+
+    public boolean running = false;
 
     private DatagramSocket mSocket;
 
@@ -96,7 +98,7 @@ public abstract class Replica<S> {
 
                             mapJsonToData(json);
 
-//                            System.out.println(mapDataToJson());
+                            //System.out.println(mapDataToJson());
                             System.out.println("Data copied from working replica");
                         }
                     } catch (SocketTimeoutException e) {
@@ -110,19 +112,20 @@ public abstract class Replica<S> {
     }
 
     public void start() {
-        if (isAvailable) {
-            startListening();
-            start(false);
-        }
+        running = true;
+        startListening();
+        start(false);
     }
 
     protected abstract void start(boolean requestData);
 
     public void stop() {
+        running = false;
         stopListening();
     }
 
     public void restart() {
+        hasError = false;
         dataCopied = false;
         stop();
         start(true);

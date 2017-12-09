@@ -20,7 +20,7 @@ public class Server implements ServerOperations {
     private DatagramSocket mSocket = null;
 
     private boolean notKilled = true;
-    private boolean hasError = false;
+    private boolean hasError = false, isAvailable = true;
 
     private final int replicaIndex;
 
@@ -52,9 +52,9 @@ public class Server implements ServerOperations {
                         } catch (SocketException e) {
                         }
                     }
-                } catch (IOException e){
+                } catch (IOException e) {
 
-                }finally {
+                } finally {
                     if (mSocket != null)
                         mSocket.close();
                     mSocket = null;
@@ -74,6 +74,14 @@ public class Server implements ServerOperations {
 
     public void setHasError(boolean hasError) {
         this.hasError = hasError;
+    }
+
+    public void setIsAvailable(boolean isAvailable) {
+        this.isAvailable = isAvailable;
+    }
+
+    public void setExpectedSequenceNumber(AtomicInteger expectedSequenceNumber) {
+        this.expectedSequenceNumber = expectedSequenceNumber;
     }
 
     @Override
@@ -466,7 +474,7 @@ public class Server implements ServerOperations {
                 if (!isRedirect) {
                     handleRequest(data, host, port);
                 } else {
-                    processRequest(data, host, port, false);
+                    if (isAvailable) processRequest(data, host, port, false);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -481,8 +489,12 @@ public class Server implements ServerOperations {
         new DatagramSocket().send(ack_packet);
 
         int seq = Integer.valueOf(data[0]);
-        if (!processQueue.containsKey(seq)) {
+
+        System.out.println("handle/" + isAvailable + ": " + Arrays.deepToString(data));
+
+        if (!processQueue.containsKey(seq) && isAvailable) {
             processQueue.put(seq, Arrays.copyOfRange(data, 2, data.length));
+            System.out.println(expectedSequenceNumber.get() + "/" + seq);
             if (expectedSequenceNumber.get() == seq) {
                 processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
             }
@@ -517,10 +529,10 @@ public class Server implements ServerOperations {
 
         if (fromQueue) {
             synchronized (expectedSequenceNumber) {
-                processQueue.remove(expectedSequenceNumber);
+                processQueue.remove(expectedSequenceNumber.get());
                 expectedSequenceNumber.incrementAndGet();
-                if (processQueue.keySet().contains(expectedSequenceNumber))
-                    processRequest(processQueue.get(expectedSequenceNumber), host, port, true);
+                if (processQueue.keySet().contains(expectedSequenceNumber.get()))
+                    processRequest(processQueue.get(expectedSequenceNumber.get()), host, port, true);
             }
         }
     }

@@ -64,7 +64,8 @@ public class ReplicaImplJ extends Replica<Server> {
     @Override
     protected void mapJsonToData(String json) {
         try {
-            if (mData.isEmpty()) {
+//            if (mData.isEmpty()) {
+            synchronized (mStudentData) {
                 JSONObject jsonData = new JSONObject(json);
                 JSONArray database = jsonData.getJSONArray("room_records");
                 JSONArray studentData = jsonData.getJSONArray("student_booking");
@@ -108,6 +109,12 @@ public class ReplicaImplJ extends Replica<Server> {
                     }
                     mData.put(obj.getString("campus"), data);
                 }
+//                }
+
+                for (String camp : serverMap.keySet()) {
+                    serverMap.get(camp).setExpectedSequenceNumber(expectedSequenceNumber);
+                }
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -184,6 +191,8 @@ public class ReplicaImplJ extends Replica<Server> {
         try {
             Server server = new Server(campus, mData.get(campus), mStudentData, processQueue, expectedSequenceNumber, replicaIndex);
             server.setHasError(hasError);
+            System.out.println("test " + isAvailable);
+            server.setIsAvailable(isAvailable);
             serverMap.put(campus, server);
             server.start();
         } catch (Exception e) {

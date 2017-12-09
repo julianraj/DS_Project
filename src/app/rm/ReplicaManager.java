@@ -3,7 +3,6 @@ package app.rm;
 import app.Util;
 import app.rm.replica.Replica;
 import app.rm.replica.julian.ReplicaImplJ;
-import app.rm.replica.mudra.ReplicaImplM;
 import app.rm.replica.rashmi.ReplicaImplR;
 
 import java.io.IOException;
@@ -19,6 +18,8 @@ public class ReplicaManager {
     public static int errorCount = 0;
     private static Replica replica;
     private static Replica replicaBackup;
+
+    private static boolean handlingError = false;
 
     public ReplicaManager() {
     }
@@ -36,23 +37,23 @@ public class ReplicaManager {
 
         switch (replicaNum) {
             case 3:
-                replica = new ReplicaImplJ(replicaNum, hasError, available);
-                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
-                replica.start();
-                break;
-            case 2:
-                replica = new ReplicaImplJ(replicaNum, hasError, available);
-                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
-                replica.start();
-                break;
-            case 1:
                 replica = new ReplicaImplR(replicaNum, hasError, available);
                 replicaBackup = new ReplicaImplR(replicaNum, false, true);
                 replica.start();
                 break;
+            case 2:
+                replica = new ReplicaImplR(replicaNum, hasError, available);
+                replicaBackup = new ReplicaImplR(replicaNum, false, true);
+                replica.start();
+                break;
+            case 1:
+                replica = new ReplicaImplJ(replicaNum, hasError, available);
+                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
+                replica.start();
+                break;
             case 0:
-                replica = new ReplicaImplM(replicaNum, hasError, available);
-                replicaBackup = new ReplicaImplM(replicaNum, false, true);
+                replica = new ReplicaImplR(replicaNum, hasError, available);
+                replicaBackup = new ReplicaImplR(replicaNum, false, true);
                 replica.start();
                 break;
             default:
@@ -75,8 +76,11 @@ public class ReplicaManager {
                 String request = new String(packet.getData()).replace("\0", "");
                 if (request.startsWith("error")) {
                     if (request.endsWith("not-available")) {
-                        System.out.println("handle crash failure");
-                        handleNoResponseFailure();
+                        if (!handlingError) {
+                            System.out.println("handle crash failure");
+                            handlingError = true;
+                            handleNoResponseFailure();
+                        }
                     } else {
                         //handle byzantine failure
                         String correctResponse = request.split(":")[1];
@@ -85,8 +89,12 @@ public class ReplicaManager {
                             errorCount++;
                             if (errorCount > 0) {
                                 errorCount = 0;
-                                System.out.println("restart replica");
-                                replica.restart();
+                                if (!handlingError) {
+                                    handlingError = true;
+                                    System.out.println("restart replica");
+                                    if (replica != null) replica.restart();
+                                    if (replicaBackup != null) replicaBackup.restart();
+                                }
                             }
                         }
                     }

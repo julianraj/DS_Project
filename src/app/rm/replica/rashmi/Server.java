@@ -21,7 +21,7 @@ public class Server implements CampusOperations {
     DatagramSocket aSocket = null;
     int booking_id_seq = 1;
     boolean notKilled = true;
-    boolean hasError = false;
+    boolean hasError = false, isAvailable = true;
     int replicaIndex;
 
     public Server(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap, HashMap<String, Integer> student_booking, String campus, HashMap<Integer, String[]> queue, AtomicInteger expected, int replicaIndex, boolean hasError) {
@@ -59,6 +59,13 @@ public class Server implements CampusOperations {
         }
     }
 
+    public void setIsAvailable(boolean isAvailable) {
+        this.isAvailable = isAvailable;
+    }
+
+    public void setExpectedSequenceNumber(AtomicInteger expectedSequenceNumber) {
+        this.expected = expectedSequenceNumber;
+    }
 
     @Override
     public String createRoom(String admin_id, int room_number, String date, String[] slots) {
@@ -539,14 +546,15 @@ public class Server implements CampusOperations {
                 DatagramPacket ack_packet = new DatagramPacket(ack_message.getBytes(), ack_message.length(), InetAddress.getByName(Util.SEQUENCER_HOST), Util.SEQUENCER_PORT);
                 new DatagramSocket().send(ack_packet);
 
-                if (!queue.containsKey(seq)) {
+                if (!queue.containsKey(seq) && isAvailable) {
                     queue.put(seq, data);
 
                     if (seq == expected.get())
                         processQueue(data);
                 }
             } catch (NumberFormatException e) {
-                Server.this.processRequest(data, aPacket.getAddress().getHostName(), aPacket.getPort(), true);
+                if (isAvailable)
+                    Server.this.processRequest(data, aPacket.getAddress().getHostName(), aPacket.getPort(), true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -624,8 +632,8 @@ public class Server implements CampusOperations {
                 message = replicaIndex + "-=" + message;
             }
             System.out.println(message);
-            DatagramPacket reply = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(host), port);
 
+            DatagramPacket reply = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(host), port);
             aSocket.send(reply);
         } catch (IOException e) {
 
