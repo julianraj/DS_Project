@@ -84,6 +84,14 @@ public class Server implements ServerOperations {
         this.expectedSequenceNumber = expectedSequenceNumber;
     }
 
+    public void setmStudentData(HashMap<String, Integer> mStudentData) {
+        this.mStudentData = mStudentData;
+    }
+
+    public void setData(HashMap<String, HashMap<Integer, List<RoomRecord>>> mData) {
+        this.mData = mData;
+    }
+
     @Override
     public String createRoom(String adminID, int roomNumber, String date, String timeSlots) {
         String response;

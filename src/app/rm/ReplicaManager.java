@@ -42,8 +42,8 @@ public class ReplicaManager {
                 replica.start();
                 break;
             case 2:
-                replica = new ReplicaImplR(replicaNum, hasError, available);
-                replicaBackup = new ReplicaImplR(replicaNum, false, true);
+                replica = new ReplicaImplJ(replicaNum, hasError, available);
+                replicaBackup = new ReplicaImplJ(replicaNum, false, true);
                 replica.start();
                 break;
             case 1:
@@ -93,7 +93,7 @@ public class ReplicaManager {
                                     handlingError = true;
                                     System.out.println("restart replica");
                                     if (replica != null) replica.restart();
-                                    if (replicaBackup != null) replicaBackup.restart();
+                                    else if (replicaBackup != null) replicaBackup.restart();
                                 }
                             }
                         }

@@ -101,6 +101,7 @@ public class ReplicaImplM extends Replica<ServerImpl> {
                     }
                 }
                 for (String campus : serverMap.keySet()) {
+                    serverMap.get(campus).setRoomRecords(mData.get(campus));
                     serverMap.get(campus).setExpectedSequenceNumber(expectedSequenceNumber);
                 }
             }

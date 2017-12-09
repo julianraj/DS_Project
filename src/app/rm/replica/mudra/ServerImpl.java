@@ -28,6 +28,10 @@ public class ServerImpl {
         this.expectedSequenceNumber = expectedSequenceNumber;
     }
 
+    public void setRoomRecords(HashMap<String, HashMap<String, HashMap<String, Record>>> roomRecords) {
+        this.roomRecords = roomRecords;
+    }
+
     // server details
     public enum ServerDetails {
         KKL("KRIKLAND-SERVER", "KKL", Util.REPLICA_HOSTS[0], Util.KKL_PORT[0], new AtomicInteger(1)), DVL(
@@ -47,8 +51,6 @@ public class ServerImpl {
             this.expectedSequenceNumber = expectedSequenceNumber;
         }
     }
-
-    ;
 
     // Reference to log file
     private File logFile;

@@ -112,6 +112,8 @@ public class ReplicaImplJ extends Replica<Server> {
 //                }
 
                 for (String camp : serverMap.keySet()) {
+                    serverMap.get(camp).setData(mData.get(camp));
+                    serverMap.get(camp).setmStudentData(mStudentData);
                     serverMap.get(camp).setExpectedSequenceNumber(expectedSequenceNumber);
                 }
 

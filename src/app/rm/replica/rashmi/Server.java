@@ -67,6 +67,14 @@ public class Server implements CampusOperations {
         this.expected = expectedSequenceNumber;
     }
 
+    public void setHashmap(HashMap<String, HashMap<Integer, List<RoomRecordClass>>> hashmap) {
+        this.hashmap = hashmap;
+    }
+
+    public void setStudent_booking(HashMap<String, Integer> student_booking) {
+        this.student_booking = student_booking;
+    }
+
     @Override
     public String createRoom(String admin_id, int room_number, String date, String[] slots) {
         synchronized (hashmap) {
