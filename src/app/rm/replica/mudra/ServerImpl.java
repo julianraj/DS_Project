@@ -388,7 +388,7 @@ public class ServerImpl {
             DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
             aSocket.send(reply);
         } else if (data[0].equals("cancel")) {
-            String response = cancelRoom(data[3], data[4]);
+            String response = cancelRoom(data[1], data[2]);
             response = "0-=" + response;
             DatagramPacket reply = new DatagramPacket(response.getBytes(), response.length(), host, port);
             aSocket.send(reply);
