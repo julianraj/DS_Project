@@ -32,6 +32,7 @@ public class ReplicaManager {
             hasError = Boolean.parseBoolean(args[1]);
         }
         if (args.length > 2) {
+
             available = Boolean.parseBoolean(args[2]);
         }
 

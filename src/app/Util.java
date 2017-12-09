@@ -15,9 +15,9 @@ public class Util {
     public static final int[] DVL_PORT = new int[]{7002, 8002, 9002, 10002};
     public static final int[] WST_PORT = new int[]{7003, 8003, 9003, 10003};
 
-    public static final String FRONT_END_HOST = "192.168.2.19";
-    public static final String SEQUENCER_HOST = "192.168.2.19";
-    public static final String[] REPLICA_HOSTS = new String[]{"192.168.2.19", "192.168.2.19", "192.168.2.19", "192.168.2.19"};
+    public static final String FRONT_END_HOST = "192.168.43.46";
+    public static final String SEQUENCER_HOST = "192.168.43.46";
+    public static final String[] REPLICA_HOSTS = new String[]{"192.168.43.12", "192.168.43.36", "192.168.43.46", "192.168.43.64"};
 
     public static int getCampusPort(String campus, int i) {
         int port;

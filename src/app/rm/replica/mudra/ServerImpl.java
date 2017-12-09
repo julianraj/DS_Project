@@ -305,6 +305,8 @@ public class ServerImpl {
                         String timeSlot = entry3.getKey();
                         if (entry3.getValue().id.equals(bookingID) && entry3.getValue().bookedBy != null && entry3.getValue().id.equals(bookingID) && entry3.getValue().bookedBy.equals(studentID)) {
                             roomRecords.get(date).get(roomNo).put(timeSlot, null);
+                            int count = Record.studentBookingCounter.get(studentID);
+                            Record.studentBookingCounter.put(studentID, count - 1);
                             System.out.println("Room cancelled.");
                             result = "success";
                         } else {
@@ -328,6 +330,8 @@ public class ServerImpl {
                     String timeSlot = entry3.getKey();
                     try {
                         if (entry3.getValue().id.matches(bookingID) && entry3.getValue().bookedBy.matches(studentID)) {
+                            int count = Record.studentBookingCounter.get(studentID);
+                            Record.studentBookingCounter.put(studentID, count - 1);
                             roomRecords.get(date1).get(roomNo).put(timeSlot, null);
                             System.out.println("Room cancelled");
                             result = bookRoom(studentID, newCampusName, newroomNo, date, newtimeSlot);
