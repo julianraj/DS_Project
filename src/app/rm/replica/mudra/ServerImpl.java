@@ -273,7 +273,7 @@ public class ServerImpl {
 
     public String getTimeSlots(String date) {
         if (hasError) {
-            return "failed";
+            return "success:KKL51 DVL51 WST51";
         }
         String list = currentServer.tag + getLocalCount(date);
         synchronized (lock) {
